@@ -4,7 +4,6 @@ import WelcomeSection from "@/components/WelcomeSection";
 import ExperienceCards from "@/components/ExperienceCards";
 import TempleSchedule from "@/components/TempleSchedule";
 import VaishnavCalendar from "@/components/VaishnavCalendar";
-import SpiritualPrograms from "@/components/SpiritualPrograms";
 import DevotionInAction from "@/components/DevotionInAction";
 import PrabhupadaTribute from "@/components/PrabhupadaTribute";
 import GallerySection from "@/components/GallerySection";
@@ -23,7 +22,6 @@ export default function Home() {
           <ExperienceCards />
           <TempleSchedule />
           <VaishnavCalendar />
-          <SpiritualPrograms />
           <GallerySection />
           <VisitUsSection />
         </div>

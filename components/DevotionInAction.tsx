@@ -33,23 +33,27 @@ export default function DevotionInAction() {
   ];
 
   return (
-    <section className="w-full bg-[#263B63] text-surface-container-lowest py-20 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
+    <section className="w-full bg-[#0a1628] text-white py-20 lg:py-28 relative overflow-hidden border-b border-white/5">
+      {/* Decorative ambient radial background accents */}
+      <div className="absolute top-1/4 -left-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center mb-16">
           {/* Left Content */}
           <div className="lg:col-span-7 flex flex-col space-y-6">
             <ScrollReveal variant="fade-up">
-              <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] text-[#ffdbc9] uppercase mb-3">
-                <span className="w-2 h-0.5 bg-[#ffdbc9]"></span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20 text-xs font-semibold tracking-[0.25em] text-amber-300 uppercase mb-4 shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
                 <span>Seva &amp; Community Service</span>
               </div>
-              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight leading-tight text-surface-container-lowest">
+              <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight leading-tight text-white">
                 Devotion in Action: <br />
-                <span className="italic text-[#ffdbc9]">
+                <span className="italic text-[#dfb260]">
                   Compassion for Every Soul
                 </span>
               </h2>
-              <p className="text-sm sm:text-base text-surface-variant/90 leading-relaxed font-light mt-4">
+              <p className="text-sm sm:text-base text-slate-300/90 leading-[1.75] font-light mt-4">
                 Bhakti becomes truly alive when it radiates outward as loving service
                 to society. At ISKCON Vartak Nagar, our volunteers actively feed the hungry,
                 distribute timeless wisdom, and uplift humanity through unmotivated compassion.
@@ -59,15 +63,15 @@ export default function DevotionInAction() {
             {/* 4 Initiatives Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4">
               {initiatives.map((item, idx) => (
-                <ScrollReveal key={idx} variant="fade-up" delay={idx * 100}>
-                  <div className="space-y-1.5">
-                    <span className="text-xs font-semibold text-[#ffdbc9] uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="material-symbols-outlined text-base">
+                <ScrollReveal key={idx} variant="fade-up" delay={idx * 80}>
+                  <div className="p-5 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-amber-400/30 transition-all duration-300 space-y-2">
+                    <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-2">
+                      <span className="material-symbols-outlined text-lg text-amber-400">
                         {item.icon}
                       </span>
                       {item.title}
                     </span>
-                    <p className="text-xs text-surface-variant/80 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-300/80 leading-relaxed font-light">
                       {item.description}
                     </p>
                   </div>
@@ -78,8 +82,8 @@ export default function DevotionInAction() {
             <ScrollReveal variant="fade-up" delay={300}>
               <div className="flex flex-wrap items-center gap-4 pt-4">
                 <a
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#bd5700] text-on-tertiary-container text-xs font-medium uppercase tracking-wider shadow hover:bg-[#964400] transition-colors"
-                  href="#donate"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-950/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200"
+                  href="/support-us#donate"
                 >
                   <span>Find Your Seva</span>
                   <span className="material-symbols-outlined text-sm">
@@ -87,8 +91,8 @@ export default function DevotionInAction() {
                   </span>
                 </a>
                 <a
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-surface-container-lowest/10 text-surface-container-lowest text-xs font-medium uppercase tracking-wider hover:bg-surface-container-lowest/20 transition-colors"
-                  href="#volunteer"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                  href="/support-us#volunteer"
                 >
                   Become a Volunteer
                 </a>
@@ -99,7 +103,7 @@ export default function DevotionInAction() {
           {/* Right: Congregation photo */}
           <div className="lg:col-span-5 relative">
             <ScrollReveal variant="image-reveal" duration={800}>
-              <div className="rounded-2xl overflow-hidden shadow-2xl">
+              <div className="rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border border-white/10">
                 <Image
                   alt="Devotees sitting together singing joyful devotional kirtan with mridanga drum and hand cymbals"
                   className="w-full aspect-[4/3] object-cover object-center"
@@ -112,41 +116,6 @@ export default function DevotionInAction() {
           </div>
         </div>
 
-        {/* Community Impact Strip */}
-        <ScrollReveal variant="fade-up" delay={200}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 bg-surface-container-lowest/5 rounded-2xl p-8">
-            <div className="text-center md:text-left">
-              <AnimatedCounter
-                target={1200}
-                suffix="+"
-                className="block text-3xl sm:text-4xl font-light font-serif text-[#ffdbc9]"
-              />
-              <span className="text-xs uppercase tracking-widest text-surface-variant/80 font-medium">
-                Daily Prasadam Meals Distributed
-              </span>
-            </div>
-            <div className="text-center md:text-left">
-              <AnimatedCounter
-                target={24}
-                suffix="+"
-                className="block text-3xl sm:text-4xl font-light font-serif text-[#ffdbc9]"
-              />
-              <span className="text-xs uppercase tracking-widest text-surface-variant/80 font-medium">
-                Years of Spiritual Guidance in Thane
-              </span>
-            </div>
-            <div className="text-center md:text-left">
-              <AnimatedCounter
-                target={150}
-                suffix="+"
-                className="block text-3xl sm:text-4xl font-light font-serif text-[#ffdbc9]"
-              />
-              <span className="text-xs uppercase tracking-widest text-surface-variant/80 font-medium">
-                Dedicated Seva Volunteers
-              </span>
-            </div>
-          </div>
-        </ScrollReveal>
       </div>
     </section>
   );

@@ -19,9 +19,24 @@ import {
 
 function ColumnHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-4 text-xs font-semibold tracking-[0.15em] text-amber-500">
+    <h3 className="mb-4 text-xs font-semibold tracking-[0.2em] text-amber-400 uppercase">
       {children}
     </h3>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="my-6 flex items-center gap-3">
+      <span className="h-px flex-1 bg-white/15" />
+      <Image
+        src="/iskcon_logo.png"
+        alt=""
+        width={70}
+        height={70}
+      />
+      <span className="h-px flex-1 bg-white/15" />
+    </div>
   );
 }
 
@@ -32,7 +47,7 @@ function FooterLink({ href = "#", children }: { href?: string, children: React.R
       <Link
         href={href}
         target={isExternal ? "_blank" : undefined}
-        className="text-[15px] text-slate-300 transition-colors hover:text-amber-400"
+        className="text-sm text-slate-300 transition-colors hover:text-amber-400 font-light"
       >
         {children}
       </Link>
@@ -55,7 +70,7 @@ function SocialIcon({
       aria-label={label}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-amber-500 hover:text-slate-900"
+      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-amber-500 hover:text-slate-900 hover:scale-105"
     >
       {children}
     </Link>
@@ -66,8 +81,8 @@ function SocialIcon({
 
 export default function Footer() {
   return (
-    <footer className="bg-[#102643] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-16 lg:px-10">
+    <footer className="bg-[#102643] text-white border-t border-white/5">
+      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_0.8fr]">
           {/* Brand / about column */}
           <div>
@@ -77,36 +92,28 @@ export default function Footer() {
                 alt="ISKCON Vartak Nagar logo"
                 width={80}
                 height={80}
+                className="brightness-110"
               />
               <div>
-                <p className="font-serif text-xl italic leading-tight text-white">
+                <p className="font-serif text-xl font-normal text-white leading-tight">
                   ISKCON Vartak Nagar
                 </p>
-                <p className="text-xs tracking-[0.2em] text-amber-500">
+                <p className="text-[11px] tracking-[0.25em] text-amber-400 uppercase font-semibold mt-0.5">
                   THANE
                 </p>
               </div>
             </div>
 
-            <p className="max-w-xs text-[15px] leading-relaxed text-slate-300">
+            <p className="max-w-xs text-sm leading-relaxed text-slate-300/85 font-light">
               A spiritual community in Thane dedicated to sharing Krishna
               consciousness through devotion, wisdom, festivals and loving
               service.
             </p>
 
-            <div className="mt-5 flex items-start gap-2 text-[15px] text-slate-300">
+            <div className="mt-5 flex items-start gap-2 text-sm text-slate-300/90 font-light">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
               <span>Vartak Nagar, Thane West, Maharashtra</span>
             </div>
-
-            <Link
-              href="#"
-              className="mt-2 inline-flex items-center gap-1 text-[15px] font-medium text-amber-500 hover:text-amber-400"
-            >
-              Get Directions <ArrowRight className="h-4 w-4" />
-            </Link>
-
-
           </div>
 
           {/* Get in touch column */}
@@ -135,15 +142,15 @@ export default function Footer() {
 
             </ul>
 
-            <hr className="my-5 border-white/10" />
+            <Divider />
 
             <div className="flex items-start gap-2">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
               <div>
-                <p className="text-[15px] font-semibold text-white">
+                <p className="text-sm font-semibold text-white">
                   Temple Timings
                 </p>
-                <div className="mt-2 space-y-1 text-[15px] text-slate-300">
+                <div className="mt-2 space-y-1 text-sm text-slate-300/90 font-light">
                   <div className="flex items-center gap-1.5 whitespace-nowrap">
                     <span className="text-slate-400">Morning:</span>
                     <span>4:30 AM – 12:30 PM</span>
@@ -157,30 +164,30 @@ export default function Footer() {
             </div>
 
             <Link
-              href="#"
-              className="mt-4 inline-flex items-center gap-1 text-[15px] font-medium text-amber-500 hover:text-amber-400"
+              href="#schedule"
+              className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-400 hover:text-amber-300 transition-colors"
             >
-              View Full Schedule <ArrowRight className="h-4 w-4" />
+              View Full Schedule <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
 
           {/* Visit column */}
           <div>
             <ColumnHeading>VISIT</ColumnHeading>
-            <ul className="space-y-3">
-              <FooterLink>Temple</FooterLink>
-              <FooterLink>Darshan &amp; Aarti</FooterLink>
-              <FooterLink>Temple Timings</FooterLink>
+            <ul className="space-y-2.5">
+              <FooterLink href="/#schedule">Temple</FooterLink>
+              <FooterLink href="/#schedule">Darshan &amp; Aarti</FooterLink>
+              <FooterLink href="/#schedule">Temple Timings</FooterLink>
             </ul>
 
             <div className="mt-8">
               <ColumnHeading>EXPERIENCE</ColumnHeading>
-              <ul className="space-y-3">
-                <FooterLink>Events</FooterLink>
-                <FooterLink>Festivals</FooterLink>
-                <FooterLink>Kirtan</FooterLink>
-                <FooterLink>Bhagavad Gita</FooterLink>
-                <FooterLink>Prasadam</FooterLink>
+              <ul className="space-y-2.5">
+                <FooterLink href="/events">Upcoming Events</FooterLink>
+                <FooterLink href="/#calendar">Festivals &amp; Ekadashi</FooterLink>
+                <FooterLink href="/#experiences">Kirtan</FooterLink>
+                <FooterLink href="/#programs">Bhagavad Gita</FooterLink>
+                <FooterLink href="/#experiences">Prasadam</FooterLink>
               </ul>
             </div>
           </div>
@@ -188,55 +195,44 @@ export default function Footer() {
           {/* Get involved column */}
           <div>
             <ColumnHeading>GET INVOLVED</ColumnHeading>
-            <ul className="space-y-3">
+            <ul className="space-y-2.5">
               <FooterLink href="/support-us">Support Us</FooterLink>
-              <FooterLink>Volunteer</FooterLink>
-              <FooterLink>Youth Programs</FooterLink>
-              <FooterLink>Community</FooterLink>
-              <FooterLink>Donate</FooterLink>
+              <FooterLink href="/support-us#volunteer">Volunteer</FooterLink>
+              <FooterLink href="/#programs">Youth Programs</FooterLink>
+              <FooterLink href="/#programs">Community</FooterLink>
+              <FooterLink href="/support-us#donate">Donate</FooterLink>
             </ul>
 
-            <div className="my-6 flex items-center gap-3">
-              <span className="h-px flex-1 bg-white/15" />
-              <Image
-                src="/iskcon_logo.png"
-                alt=""
-                width={50}
-                height={50}
-              />
-              <span className="h-px flex-1 bg-white/15" />
-            </div>
+            <Divider />
 
             <ColumnHeading>CONNECT</ColumnHeading>
             <div className="flex items-center gap-3">
-
               <SocialIcon label="Instagram Handle" href="https://www.instagram.com/iskconvartaknagarthane/">
-                <InstagramLogoIcon size={32} />
+                <InstagramLogoIcon size={24} />
               </SocialIcon>
 
               <SocialIcon label="Youtube Handle">
-                <YoutubeLogoIcon size={32} />
+                <YoutubeLogoIcon size={24} />
               </SocialIcon>
 
               <SocialIcon label="Facebook Handle">
-                <FacebookLogoIcon size={32} />
+                <FacebookLogoIcon size={24} />
               </SocialIcon>
 
               <SocialIcon label="Whatsapp Handle">
-                <WhatsappLogoIcon size={32} />
+                <WhatsappLogoIcon size={24} />
               </SocialIcon>
-
             </div>
           </div>
 
           {/* Mantra column */}
           <div className="lg:text-right">
-            <p className="font-serif text-xl italic text-white">
+            <p className="font-serif text-xl font-normal text-white">
               Hare Krishna
             </p>
-            <div className="mt-4 space-y-1 font-serif text-[15px] italic leading-relaxed text-slate-300">
-              <p className="not-italic">Hare Krishna Hare Krishna</p>
-              <p className="not-italic">Krishna Krishna Hare Hare</p>
+            <div className="mt-4 space-y-1.5 font-serif text-base italic leading-relaxed text-slate-200/90">
+              <p>Hare Krishna Hare Krishna</p>
+              <p>Krishna Krishna Hare Hare</p>
               <p>Hare Rama Hare Rama</p>
               <p>Rama Rama Hare Hare</p>
             </div>
@@ -257,8 +253,8 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6 py-6 text-center text-sm text-slate-400 lg:flex-row lg:justify-between lg:px-10 lg:text-left">
+      <div className="border-t border-white/10 bg-[#091629]">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-6 py-6 text-center text-xs text-slate-400 lg:flex-row lg:justify-between lg:px-8 lg:text-left">
           <p>© {new Date().getFullYear()} ISKCON Vartak Nagar. All Rights Reserved.</p>
 
           <p>
@@ -267,18 +263,17 @@ export default function Footer() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-            <Link href="#" className="hover:text-amber-400">
+            <Link href="#" className="hover:text-amber-400 transition-colors">
               Privacy Policy
             </Link>
             <span className="text-slate-600">|</span>
-            <Link href="#" className="hover:text-amber-400">
+            <Link href="#" className="hover:text-amber-400 transition-colors">
               Terms
             </Link>
             <span className="text-slate-600">|</span>
-            <Link href="#" className="hover:text-amber-400">
+            <Link href="#" className="hover:text-amber-400 transition-colors">
               Contact
             </Link>
-
           </div>
         </div>
       </div>

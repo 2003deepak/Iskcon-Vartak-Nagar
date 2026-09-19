@@ -69,7 +69,7 @@ export default function Hero() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   }, []);
 
-  // Auto-play timer
+  // Auto-play timer (5 seconds)
   useEffect(() => {
     if (isPaused) return;
     const timer = setInterval(() => {
@@ -83,62 +83,73 @@ export default function Hero() {
       className="relative w-full h-[90vh] min-h-[580px] max-h-[850px] flex items-center justify-center overflow-hidden bg-[#060d18]"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      aria-label="Hero Carousel"
     >
-      {/* Background Images Carousel */}
-      {slides.map((slide, index) => (
-        <div
-          key={slide.id}
-          className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? "opacity-100 scale-100" : "opacity-0 scale-105 pointer-events-none"
+      {/* Background Images Carousel with Smooth Crossfade & Ken Burns Zoom */}
+      {slides.map((slide, index) => {
+        const isActive = index === currentSlide;
+        return (
+          <div
+            key={slide.id}
+            aria-hidden={!isActive}
+            className={`absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out motion-reduce:transition-none ${
+              isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}
-        >
-          <Image
-            alt={slide.alt}
-            src={slide.image}
-            fill
-            className="object-cover object-center"
-            priority={index === 0}
-          />
-          {/* Ultra Subtle Gradient Overlays for maximum background image clarity */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-transparent to-black/25 opacity-70" />
-          <div className="absolute inset-0 bg-black/10" />
-        </div>
-      ))}
+          >
+            <div className={`relative w-full h-full ${isActive ? "animate-ken-burns" : ""}`}>
+              <Image
+                alt={slide.alt}
+                src={slide.image}
+                fill
+                className="object-cover object-center"
+                priority={index === 0}
+              />
+            </div>
+            {/* Subtle Gradient Overlays for optimal contrast and readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-black/35 to-black/25 opacity-80" />
+            <div className="absolute inset-0 bg-black/15" />
+          </div>
+        );
+      })}
 
-      {/* Content Container (shifted down slightly for optimal composition) */}
-      <div className="relative z-10 max-w-4xl mx-auto px-6 text-center flex flex-col items-center pt-16 sm:pt-20">
+      {/* Dynamic Content Container with Staggered Slide-In Motion */}
+      <div
+        key={`slide-content-${currentSlide}`}
+        className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center pt-12 sm:pt-16 md:pt-20"
+      >
         {/* Eyebrow / Live Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/30 mb-4 shadow-lg">
+        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-500/30 mb-4 sm:mb-5 shadow-lg animate-hero-fade-up [animation-delay:50ms]">
           <span className="w-2 h-2 rounded-full bg-[#dfb260] animate-pulse shadow-[0_0_8px_#dfb260]" />
-          <span className="text-[11px] sm:text-xs tracking-widest uppercase font-medium text-[#e6ca85]">
+          <span className="text-[9.5px] sm:text-xs tracking-[0.18em] sm:tracking-[0.2em] uppercase font-semibold text-[#e6ca85]">
             {slides[currentSlide].eyebrow}
           </span>
         </div>
 
         {/* Headline with high-contrast drop shadow */}
-        <h1 className="font-serif text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight leading-tight text-[#fce8b8] max-w-3xl mb-4 [text-shadow:_0_3px_12px_rgba(0,0,0,0.95),_0_1px_4px_rgba(0,0,0,0.9)] transition-all duration-700">
+        <h1 className="font-serif text-[26px] xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal tracking-tight leading-[1.2] sm:leading-[1.15] text-[#fce8b8] max-w-3xl mb-4 sm:mb-5 px-2 [text-shadow:_0_3px_12px_rgba(0,0,0,0.95),_0_1px_4px_rgba(0,0,0,0.9)] animate-hero-fade-up [animation-delay:150ms]">
           {slides[currentSlide].title}
         </h1>
 
-        {/* Subtitle with soft frosted glass pill for readability over bright images */}
-        <p className="max-w-xl text-xs sm:text-sm md:text-base text-slate-100 font-medium leading-relaxed mb-6 px-6 py-2.5 rounded-2xl bg-black/45 backdrop-blur-md border border-white/10 [text-shadow:_0_1px_4px_rgba(0,0,0,0.9)] transition-all duration-700">
+        {/* Subtitle with soft frosted glass pill */}
+        <p className="max-w-2xl text-xs sm:text-sm md:text-base text-slate-100 font-normal leading-relaxed mb-6 sm:mb-8 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-black/45 backdrop-blur-md border border-white/10 [text-shadow:_0_1px_4px_rgba(0,0,0,0.9)] animate-hero-fade-up [animation-delay:250ms]">
           {slides[currentSlide].subtitle}
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto animate-hero-fade-up [animation-delay:350ms]">
           <a
             href={slides[currentSlide].primaryCta.href}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#d97706] hover:bg-[#b45309] text-white text-xs sm:text-sm font-medium shadow-lg shadow-amber-950/50 hover:scale-105 transition-all duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs sm:text-sm font-bold tracking-wider uppercase shadow-md shadow-black/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200"
           >
             <span>{slides[currentSlide].primaryCta.text}</span>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </a>
 
           <a
             href={slides[currentSlide].secondaryCta.href}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium hover:scale-105 transition-all duration-200"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs sm:text-sm font-semibold tracking-wider uppercase hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 backdrop-blur-xs"
           >
             <span>{slides[currentSlide].secondaryCta.text}</span>
           </a>
@@ -149,7 +160,7 @@ export default function Hero() {
       <button
         onClick={prevSlide}
         aria-label="Previous Slide"
-        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-200 group shadow-lg hover:scale-110"
+        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
       >
         <svg className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -160,28 +171,28 @@ export default function Hero() {
       <button
         onClick={nextSlide}
         aria-label="Next Slide"
-        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-200 group shadow-lg hover:scale-110"
+        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
       >
         <svg className="w-5 h-5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
         </svg>
       </button>
 
-      {/* Pagination Dots */}
+      {/* Pagination Dots with Smooth Pill-Expansion Transition */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2.5 px-4 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 shadow-lg">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
             aria-label={`Go to slide ${index + 1}`}
-            className={`transition-all duration-300 rounded-full ${index === currentSlide
-              ? "w-7 h-2.5 bg-[#dfb260] shadow-[0_0_8px_#dfb260]"
-              : "w-2.5 h-2.5 bg-white/40 hover:bg-white/80"
-              }`}
+            className={`transition-all duration-500 ease-out rounded-full cursor-pointer motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+              index === currentSlide
+                ? "w-8 h-2.5 bg-[#dfb260] shadow-[0_0_10px_rgba(223,178,96,0.6)]"
+                : "w-2.5 h-2.5 bg-white/40 hover:bg-white/80"
+            }`}
           />
         ))}
       </div>
     </section>
   );
 }
-
