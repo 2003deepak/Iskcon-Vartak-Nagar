@@ -19,7 +19,7 @@ export default function PrabhupadaTribute() {
                   <Image
                     alt="Historical archival portrait of His Divine Grace A.C. Bhaktivedanta Swami Prabhupada"
                     className="w-full aspect-[4/5] object-cover object-top max-h-[380px] sm:max-h-[420px]"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuANWrlSG_pA_DFAbQCqUX9BcY4AcgeoYAxv9UUUgcAwVAUtcvC6Qy18tLrxP5NNEnhk6bkKjoaAm7KSGR1bqPIBIR1qBdTPR4U8oi6IfM4SztMCOklqNSYw0pyxRrxInX3sUsaVqh5MGvCjuxh9u4EyJZ0oR5I1a07VgEJ1o_VOPUt64fHI_82S4UeqkqMTjL5IUv5LUpQDoQ9Vtifqcy9sKyShBdyQxl5EhgR4ZCy9xz3ixcZEi38n"
+                    src="/prabhupad.jpg"
                     width={400}
                     height={500}
                     priority
@@ -72,18 +72,6 @@ export default function PrabhupadaTribute() {
                 In 1965, at the age of sixty-nine, Srila Prabhupada journeyed alone from India to New York aboard a steamship with only seven dollars and a trunk of translated Vedic literatures. In twelve brief years, he circumnavigated the globe fourteen times, translating dozens of authoritative sacred volumes and establishing over a hundred temples worldwide.
               </p>
 
-            </ScrollReveal>
-
-            <ScrollReveal variant="fade-up" delay={400} className="pt-1">
-              <a
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-amber-400 uppercase tracking-wider hover:text-amber-300 transition-colors"
-                href="/about"
-              >
-                <span>Discover Srila Prabhupada&apos;s Journey</span>
-                <span className="material-symbols-outlined text-sm">
-                  arrow_forward
-                </span>
-              </a>
             </ScrollReveal>
           </div>
         </div>

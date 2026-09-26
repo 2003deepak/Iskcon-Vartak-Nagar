@@ -126,18 +126,30 @@ export default function EventsPage() {
           <section className="w-full py-12 lg:py-16 px-6 sm:px-8 max-w-7xl mx-auto">
             <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0c1b33] via-[#091527] to-[#060e1b] border border-amber-500/30 shadow-2xl text-white">
               <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-                {/* Banner Image / Poster Container */}
-                <div className="lg:col-span-6 relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto lg:h-full min-h-[320px] overflow-hidden group">
+                {/* Banner Image / Poster Container - supports both 16:9 and 3:4 aspect ratios */}
+                <div className="lg:col-span-6 relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-auto lg:h-full min-h-[320px] bg-slate-950 flex items-center justify-center overflow-hidden group">
+                  {/* Ambient Blurred Glow */}
                   <Image
                     src={featuredEvent.bannerUrl}
-                    alt={featuredEvent.title}
+                    alt=""
                     fill
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
                     priority
+                    aria-hidden="true"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#060e1b] via-transparent to-black/30 lg:bg-gradient-to-r lg:from-transparent lg:to-[#0c1b33]" />
-                  <div className="absolute top-4 left-4">
+                  {/* Contained Full Banner / Poster */}
+                  <div className="relative w-full h-full flex items-center justify-center p-2 sm:p-4">
+                    <Image
+                      src={featuredEvent.bannerUrl}
+                      alt={featuredEvent.title}
+                      fill
+                      className="object-contain group-hover:scale-105 transition-transform duration-700 drop-shadow-2xl"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      priority
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#060e1b]/80 via-transparent to-black/20 lg:bg-gradient-to-r lg:from-transparent lg:to-[#0c1b33]/60 pointer-events-none" />
+                  <div className="absolute top-4 left-4 z-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-bold text-[11px] tracking-wider uppercase shadow-lg">
                       <span className="material-symbols-outlined text-xs">star</span>
                       Featured Festival
@@ -307,29 +319,38 @@ export default function EventsPage() {
                   className="group bg-white rounded-3xl border border-stone-200/90 shadow-sm hover:shadow-xl hover:border-amber-400/50 transition-all duration-300 flex flex-col justify-between overflow-hidden"
                 >
                   <div>
-                    {/* Event Banner Image Container */}
+                    {/* Event Banner Image Container - supports 3:4 flyers and 16:9 banners */}
                     <div
                       onClick={() => setActiveModalEvent(event)}
-                      className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 cursor-pointer"
+                      className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950 flex items-center justify-center cursor-pointer"
                     >
+                      {/* Ambient Blur */}
+                      <Image
+                        src={event.bannerUrl}
+                        alt=""
+                        fill
+                        className="object-cover blur-xl scale-110 opacity-35 pointer-events-none"
+                        aria-hidden="true"
+                      />
+                      {/* Contained Poster */}
                       <Image
                         src={event.bannerUrl}
                         alt={event.title}
                         fill
-                        className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500 drop-shadow-md"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
 
                       {/* Category Badge */}
-                      <div className="absolute top-3.5 left-3.5">
+                      <div className="absolute top-3.5 left-3.5 z-10">
                         <span className="px-3 py-1 rounded-full bg-[#102643]/90 backdrop-blur-xs text-amber-300 text-[10px] font-semibold tracking-wider uppercase border border-amber-400/25 shadow-sm">
                           {event.category}
                         </span>
                       </div>
 
                       {/* Click to Zoom Banner Indicator */}
-                      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/70 backdrop-blur-xs text-white text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
+                      <div className="absolute bottom-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/75 backdrop-blur-xs text-white text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/20">
                         <span className="material-symbols-outlined text-xs">zoom_in</span>
                         <span>View Poster</span>
                       </div>
@@ -472,16 +493,39 @@ export default function EventsPage() {
               </button>
 
               <div className="grid grid-cols-1 md:grid-cols-12 max-h-[85vh] overflow-y-auto">
-                {/* Left: Banner Poster Image */}
-                <div className="md:col-span-5 relative min-h-[260px] md:min-h-[460px] bg-black">
+                {/* Left: Banner Poster Image - supports 3:4 flyers and 16:9 banners */}
+                <div className="md:col-span-5 relative min-h-[280px] md:min-h-[460px] bg-slate-950 flex items-center justify-center overflow-hidden">
+                  {/* Ambient Blur */}
                   <Image
                     src={activeModalEvent.bannerUrl}
-                    alt={activeModalEvent.title}
+                    alt=""
                     fill
-                    className="object-cover object-center"
-                    sizes="(max-width: 768px) 100vw, 40vw"
+                    className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
+                    aria-hidden="true"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628] via-transparent to-transparent md:hidden" />
+                  {/* Contained Poster */}
+                  <div className="relative w-full h-full min-h-[280px] md:min-h-[460px] flex items-center justify-center p-3">
+                    <Image
+                      src={activeModalEvent.bannerUrl}
+                      alt={activeModalEvent.title}
+                      fill
+                      className="object-contain drop-shadow-2xl"
+                      sizes="(max-width: 768px) 100vw, 40vw"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a1628]/80 via-transparent to-transparent md:hidden pointer-events-none" />
+
+                  {/* Open High-Res Poster Button */}
+                  <a
+                    href={activeModalEvent.bannerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="absolute bottom-3 left-3 z-10 px-2.5 py-1 rounded-full bg-black/70 hover:bg-black text-white text-[11px] font-medium backdrop-blur-xs border border-white/20 transition flex items-center gap-1"
+                    title="Open full resolution poster in new tab"
+                  >
+                    <span className="material-symbols-outlined text-xs">open_in_new</span>
+                    <span>Full Resolution</span>
+                  </a>
                 </div>
 
                 {/* Right: Full Schedule & Event Details */}

@@ -211,7 +211,7 @@ export default function Footer() {
                 <InstagramLogoIcon size={24} />
               </SocialIcon>
 
-              <SocialIcon label="Youtube Handle">
+              <SocialIcon label="Youtube Handle" href="https://www.youtube.com/@haradascongregation">
                 <YoutubeLogoIcon size={24} />
               </SocialIcon>
 

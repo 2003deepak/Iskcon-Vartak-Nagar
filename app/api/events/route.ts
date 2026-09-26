@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import ProgramEvent from "@/models/ProgramEvent";
 
@@ -8,6 +8,7 @@ const defaultEvents = [
   {
     _id: "evt-janmashtami",
     title: "Sri Krishna Janmashtami Mahotsav 2026",
+    slug: "sri-krishna-janmashtami-mahotsav-2026",
     subtitle: "The Most Auspicious Appearance Day of Lord Sri Krishna",
     category: "Grand Festival",
     date: "September 04, 2026",
@@ -32,12 +33,13 @@ const defaultEvents = [
     isFeatured: true,
     contactNumber: "+91 93228 81265",
     rsvpLink: "/support-us#donate",
-    status: "upcoming",
+    status: "published",
     order: 1,
   },
   {
     _id: "evt-radhashtami",
     title: "Sri Radhashtami Celebrations",
+    slug: "sri-radhashtami-celebrations",
     subtitle: "Divine Appearance Day of Srimati Radharani",
     category: "Grand Festival",
     date: "September 17, 2026",
@@ -61,158 +63,121 @@ const defaultEvents = [
     isFeatured: false,
     contactNumber: "+91 93228 81265",
     rsvpLink: "/support-us#donate",
-    status: "upcoming",
+    status: "published",
     order: 2,
   },
   {
     _id: "evt-sunday-feast",
     title: "Sunday Love Feast & Spiritual Satsang",
+    slug: "sunday-love-feast-spiritual-satsang",
     subtitle: "Weekly Uplifting Spiritual Gathering for Families & Youth",
     category: "Weekly Program",
     date: "Every Sunday",
     time: "5:30 PM – 8:30 PM",
-    location: "Satsang Auditorium, ISKCON Vartak Nagar, Thane",
-    bannerUrl: "/congregation.jpg",
+    location: "Main Temple Hall & Prasadam Hall, ISKCON Vartak Nagar, Thane",
+    bannerUrl: "/srila_prabhupada.jpeg",
     description:
-      "A weekly tradition established by Srila Prabhupada. Recharge your spiritual battery every Sunday with blissful congregational singing (Kirtan), thought-provoking Bhagavad-gita wisdom class addressing modern life challenges, and a delightful multi-course vegetarian Prasadam feast.",
+      "A weekly sanctuary for your soul! Immerse yourself in melodious congregational kirtan chanting, practical and profound Bhagavad Gita discourses by senior monks, spiritual fellowship, kids value education activities, and a multi-course vegetarian sanctified Love Feast (Prasadam).",
     highlights: [
-      "Soulful Mridanga & Kartal Kirtan",
-      "Practical Wisdom Discourse from Bhagavad Gita",
-      "Interactive Q&A Session",
-      "Free Multi-Course Sanctified Dinner Feast",
+      "Enlivening Gaura Aarti & Kirtan Mela",
+      "Practical Bhagavad Gita Discourse",
+      "Special Youth & Children Q&A",
+      "Free Multi-Course Delicious Prasadam",
     ],
     schedule: [
-      { time: "05:30 PM", title: "Joyful Harinam Kirtan" },
-      { time: "06:15 PM", title: "Bhagavad Gita Wisdom Discourse & Q&A" },
-      { time: "07:30 PM", title: "Sandhya Gaura Aarti" },
-      { time: "08:00 PM", title: "Community Love Feast (Prasadam)" },
+      { time: "05:30 PM", title: "Tulsi Aarti & Melodious Kirtan" },
+      { time: "06:15 PM", title: "Vedic Wisdom Discourse & Q&A" },
+      { time: "07:30 PM", title: "Grand Sandhya Gaura Aarti" },
+      { time: "08:00 PM", title: "Sumptuous Sunday Love Feast" },
     ],
     isFeatured: false,
     contactNumber: "+91 93228 81265",
-    status: "upcoming",
+    rsvpLink: "/support-us#donate",
+    status: "published",
     order: 3,
-  },
-  {
-    _id: "evt-youth-retreat",
-    title: "VOICE Youth Empowerment Seminar",
-    subtitle: "Focus, Leadership & Gita Wisdom for Modern Students & Professionals",
-    category: "Youth & Kids",
-    date: "First & Third Saturday of Every Month",
-    time: "6:00 PM – 8:30 PM",
-    location: "Youth Center Seminar Room, ISKCON Vartak Nagar",
-    bannerUrl: "/books_distribution.jpg",
-    description:
-      "Designed specifically for college students and working professionals. Learn timeless techniques of mind control, stress management, values-based leadership, and spiritual purpose from ancient Vedic wisdom applied to contemporary life.",
-    highlights: [
-      "Interactive Mind Management Workshops",
-      "Mantra Meditation & Focus Training",
-      "Q&A on Career, Relationships & Spirituality",
-      "Youth Networking & Delicious Prasadam",
-    ],
-    schedule: [
-      { time: "06:00 PM", title: "Ice Breaking & Meditation Session" },
-      { time: "06:30 PM", title: "Dynamic Multimedia Seminar" },
-      { time: "07:30 PM", title: "Open Mic Q&A" },
-      { time: "08:00 PM", title: "Snacks & Youth Circle" },
-    ],
-    isFeatured: false,
-    contactNumber: "+91 93228 81265",
-    status: "upcoming",
-    order: 4,
-  },
-  {
-    _id: "evt-kirtan-mela",
-    title: "Maha Kirtan Mela – An Evening of Holy Names",
-    subtitle: "5 Hours of Continuous Ecstatic Congregational Chanting",
-    category: "Kirtan & Seva",
-    date: "Upcoming Ekadashi Saturday",
-    time: "4:00 PM – 9:00 PM",
-    location: "Main Temple Hall, ISKCON Vartak Nagar, Thane",
-    bannerUrl: "https://img.youtube.com/vi/OGSaFXdssdQ/maxresdefault.jpg",
-    description:
-      "Dive into the ocean of the Holy Names! Renowned kirtaniyas and devotees gather for an uninterrupted 5-hour musical meditation featuring traditional mridangas, harmoniums, kartals, and hundreds of singing voices in transcendental unison.",
-    highlights: [
-      "5 Hours Non-Stop Kirtan with Renowned Kirtaniyas",
-      "Traditional Indian Instruments & Melodies",
-      "Deep Meditative Absorption",
-      "Ekadashi Prasadam Distribution",
-    ],
-    schedule: [
-      { time: "04:00 PM", title: "Opening Prayers & Slow Meditative Chants" },
-      { time: "06:00 PM", title: "Uplifting Classical Raga Kirtan" },
-      { time: "07:30 PM", title: "High-Energy Dancing Kirtan" },
-      { time: "08:45 PM", title: "Concluding Aarti & Ekadashi Prasadam" },
-    ],
-    isFeatured: false,
-    contactNumber: "+91 93228 81265",
-    status: "upcoming",
-    order: 5,
   },
 ];
 
-export async function GET(request: Request) {
+/**
+ * GET /api/events
+ * Public Read-Only Endpoint for Published Program Events
+ */
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
-    const featured = searchParams.get("featured");
+    const search = searchParams.get("search");
+    const limitParam = searchParams.get("limit");
 
-    let events: any[] = [];
-    let isConnected = false;
+    const now = new Date();
 
-    try {
-      await connectToDatabase();
-      isConnected = true;
+    // Query strictly for published content (exclude drafts and archived)
+    const query: Record<string, any> = {
+      status: { $in: ["published", "upcoming"] },
+      $or: [
+        { publishAt: { $exists: false } },
+        { publishAt: null },
+        { publishAt: { $lte: now } },
+      ],
+    };
 
-      const query: Record<string, any> = { status: "upcoming" };
-      if (category && category !== "all") {
-        query.category = category;
-      }
-      if (featured === "true") {
-        query.isFeatured = true;
-      }
-
-      events = await ProgramEvent.find(query).sort({ order: 1, createdAt: -1 }).lean();
-
-      // Seed database with default events if collection is completely empty
-      if (events.length === 0 && (!category || category === "all") && !featured) {
-        const count = await ProgramEvent.countDocuments();
-        if (count === 0) {
-          const inserted = await ProgramEvent.insertMany(
-            defaultEvents.map(({ _id, ...rest }) => rest)
-          );
-          events = inserted.map((doc) => doc.toObject());
-        }
-      }
-    } catch (dbError) {
-      console.warn("MongoDB offline/fallback for ProgramEvents:", dbError);
+    if (category && category !== "All Events" && category !== "all") {
+      query.category = { $regex: new RegExp(`^${category.trim()}$`, "i") };
     }
 
-    // Use default fallback events if database returns none
+    if (search && search.trim().length > 0) {
+      const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.$and = [
+        {
+          $or: [
+            { title: new RegExp(sanitized, "i") },
+            { subtitle: new RegExp(sanitized, "i") },
+            { description: new RegExp(sanitized, "i") },
+            { location: new RegExp(sanitized, "i") },
+          ],
+        },
+      ];
+    }
+
+    let events: any[] = [];
+    try {
+      await connectToDatabase();
+      const dbQuery = ProgramEvent.find(query)
+        .sort({ order: 1, createdAt: -1 })
+        .select(
+          "title slug subtitle category shortDescription description startDate startTime endDate endTime date time timezone location venue mapLink bannerUrl thumbnailUrl galleryImages highlights schedule isFeatured contactNumber rsvpLink status order"
+        );
+
+      if (limitParam) {
+        const limitNum = parseInt(limitParam, 10);
+        if (!isNaN(limitNum) && limitNum > 0) {
+          dbQuery.limit(limitNum);
+        }
+      }
+
+      events = await dbQuery.lean();
+    } catch (dbErr) {
+      console.warn("[Public Events API] Database offline or empty, serving default seed:", dbErr);
+    }
+
     if (!events || events.length === 0) {
-      let filtered = [...defaultEvents];
-      if (category && category !== "all") {
-        filtered = filtered.filter(
+      events = defaultEvents;
+      if (category && category !== "All Events" && category !== "all") {
+        events = events.filter(
           (e) => e.category.toLowerCase() === category.toLowerCase()
         );
       }
-      if (featured === "true") {
-        filtered = filtered.filter((e) => e.isFeatured);
-      }
-      events = filtered;
     }
 
     return NextResponse.json({
       success: true,
       count: events.length,
-      source: isConnected ? "mongodb" : "fallback",
       data: events,
     });
   } catch (error: any) {
+    console.error("[Public Events GET Error]:", error);
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || "Failed to fetch upcoming events",
-      },
+      { success: false, error: error.message || "Failed to fetch events" },
       { status: 500 }
     );
   }
