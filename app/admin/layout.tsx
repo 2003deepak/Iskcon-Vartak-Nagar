@@ -31,7 +31,7 @@ export default function AdminLayout({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
-  // Fetch current session if on a dashboard page
+  // Fetch current session if on a dashboard page & keep token fresh
   useEffect(() => {
     if (isAuthPage) return;
 
@@ -80,8 +80,24 @@ export default function AdminLayout({
 
     loadAdminUser();
 
+    // Proactive background silent refresh every 10 minutes (before 15min access token expiry)
+    const refreshInterval = setInterval(async () => {
+      try {
+        const refreshRes = await fetch("/api/admin/auth/refresh", { method: "POST" });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          if (refreshData.success && isMounted) {
+            setCurrentUser(refreshData.user);
+          }
+        }
+      } catch (err) {
+        console.warn("[Session Refresh Interval Error]:", err);
+      }
+    }, 10 * 60 * 1000);
+
     return () => {
       isMounted = false;
+      clearInterval(refreshInterval);
     };
   }, [pathname, isAuthPage, router]);
 
@@ -136,7 +152,7 @@ export default function AdminLayout({
       ),
     },
     {
-      name: "Media & Images",
+      name: "Media & Darshan",
       href: "/admin/media",
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -30,14 +30,6 @@ interface ProgramEvent {
   status?: string;
 }
 
-const CATEGORIES = [
-  "All Events",
-  "Grand Festival",
-  "Weekly Program",
-  "Youth & Kids",
-  "Kirtan & Seva",
-];
-
 export default function EventsPage() {
   const [events, setEvents] = useState<ProgramEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,25 +91,7 @@ export default function EventsPage() {
               Immerse yourself in celestial celebrations, uplifting kirtans, enlightening Vedic wisdom discourses, and community feasts at ISKCON Vartak Nagar.
             </p>
 
-            {/* Category Filter Pills */}
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3 max-w-4xl mx-auto">
-              {CATEGORIES.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 cursor-pointer ${
-                      isActive
-                        ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 scale-105 font-semibold"
-                        : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white border border-white/10"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
+
           </div>
         </section>
 
@@ -133,6 +107,7 @@ export default function EventsPage() {
                     src={featuredEvent.bannerUrl}
                     alt=""
                     fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
                     className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
                     priority
                     aria-hidden="true"
@@ -329,6 +304,7 @@ export default function EventsPage() {
                         src={event.bannerUrl}
                         alt=""
                         fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover blur-xl scale-110 opacity-35 pointer-events-none"
                         aria-hidden="true"
                       />
@@ -500,6 +476,7 @@ export default function EventsPage() {
                     src={activeModalEvent.bannerUrl}
                     alt=""
                     fill
+                    sizes="(max-width: 768px) 100vw, 40vw"
                     className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
                     aria-hidden="true"
                   />
@@ -602,7 +579,7 @@ export default function EventsPage() {
                   <div className="pt-3 flex flex-wrap gap-3">
                     <Link
                       href="/support-us#donate"
-                      className="px-6 py-2.5 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-slate-950 text-xs font-bold uppercase tracking-wider shadow-md transition-all"
+                      className="px-5 py-2.5 flex items-center rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-slate-950 text-xs font-bold uppercase tracking-wider shadow-md transition-all"
                     >
                       Offer Seva
                     </Link>

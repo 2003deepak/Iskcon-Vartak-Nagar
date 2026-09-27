@@ -58,7 +58,6 @@ export default function VaishnavCalendar() {
   const [selectedDateKey, setSelectedDateKey] = useState<string | null>(null);
   const [eventsData, setEventsData] = useState<Record<string, EventInfo>>({});
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<"grid" | "agenda">("grid");
 
   // Synchronize client date upon mount to guarantee real-world client accuracy
   useEffect(() => {
@@ -183,7 +182,7 @@ export default function VaishnavCalendar() {
             <div>
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20 text-amber-800 text-xs font-semibold uppercase tracking-[0.25em] mb-4 shadow-xs">
                 <CalendarBlank className="w-4 h-4 text-amber-700" />
-                <span>Vaishnava Calendar • Panchanga</span>
+                <span>Vaishnava Calendar</span>
               </div>
               <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-normal text-slate-900 tracking-tight">
                 Sacred Festivals &amp; Auspicious Tithis
@@ -199,15 +198,15 @@ export default function VaishnavCalendar() {
               <button
                 onClick={jumpToToday}
                 className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-xs font-semibold border shadow-xs transition-all cursor-pointer ${isCurrentMonthView
-                    ? "bg-amber-500/10 border-amber-400/50 text-amber-900 hover:bg-amber-500/20"
-                    : "bg-white hover:bg-stone-50 text-slate-700 border-stone-300 hover:border-amber-400"
+                  ? "bg-amber-500/10 border-amber-400/50 text-amber-900 hover:bg-amber-500/20"
+                  : "bg-white hover:bg-stone-50 text-slate-700 border-stone-300 hover:border-amber-400"
                   }`}
                 title="Jump to today's date in calendar"
               >
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                 <span>
                   {isCurrentMonthView ? "Today" : "Jump to Today"}:{" "}
-                  {today.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  {today.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                 </span>
               </button>
             </div>
@@ -254,36 +253,12 @@ export default function VaishnavCalendar() {
                   </button>
                 </div>
 
-                {/* View Mode Toggle: Grid vs Agenda */}
-                <div className="inline-flex items-center p-1 rounded-full bg-stone-100 border border-stone-200 shadow-xs">
-                  <button
-                    onClick={() => setViewMode("grid")}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${viewMode === "grid"
-                        ? "bg-[#0a1628] text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    aria-label="Month Grid View"
-                  >
-                    <GridFour className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Grid</span>
-                  </button>
-                  <button
-                    onClick={() => setViewMode("agenda")}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${viewMode === "agenda"
-                        ? "bg-[#0a1628] text-white shadow-xs"
-                        : "text-slate-600 hover:text-slate-900"
-                      }`}
-                    aria-label="Agenda List View"
-                  >
-                    <ListBullets className="w-3.5 h-3.5" />
-                    <span>Agenda ({monthEventsList.length})</span>
-                  </button>
-                </div>
+
               </div>
             </div>
 
             {/* VIEW 1: MONTH GRID (Desktop & Tablet & Mobile) */}
-            <div className={viewMode === "grid" ? "block" : "hidden sm:block"}>
+            <div className="block">
               {/* Days of Week Header */}
               <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center">
                 {dayHeaders.map((day, idx) => (
@@ -346,10 +321,10 @@ export default function VaishnavCalendar() {
                       <div className="flex items-center justify-between w-full">
                         <span
                           className={`text-[11px] sm:text-sm font-semibold flex items-center justify-center rounded-full w-5 h-5 sm:w-7 sm:h-7 mx-auto sm:mx-0 transition-all ${isToday
-                              ? "bg-amber-500 text-white font-bold shadow-xs ring-2 ring-amber-300 ring-offset-1"
-                              : isSelected
-                                ? "bg-[#0a1628] text-white"
-                                : "text-slate-700 group-hover:text-slate-900"
+                            ? "bg-amber-500 text-white font-bold shadow-xs ring-2 ring-amber-300 ring-offset-1"
+                            : isSelected
+                              ? "bg-[#0a1628] text-white"
+                              : "text-slate-700 group-hover:text-slate-900"
                             }`}
                         >
                           {dayNum}
@@ -396,8 +371,8 @@ export default function VaishnavCalendar() {
                         <div className="hidden sm:block mt-1">
                           <div
                             className={`px-1.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-semibold leading-tight line-clamp-2 transition-colors ${isEkadashi
-                                ? "bg-amber-100/90 text-amber-950 border border-amber-300/70 group-hover:bg-amber-200/80"
-                                : "bg-amber-100/80 text-amber-950 border border-amber-200/60 group-hover:bg-amber-200/70"
+                              ? "bg-amber-100/90 text-amber-950 border border-amber-300/70 group-hover:bg-amber-200/80"
+                              : "bg-amber-100/80 text-amber-950 border border-amber-200/60 group-hover:bg-amber-200/70"
                               }`}
                           >
                             {eventInfo.name}
@@ -409,122 +384,6 @@ export default function VaishnavCalendar() {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* VIEW 2: AGENDA / LIST VIEW (Optimized for Mobile & Quick Browsing) */}
-            <div className={viewMode === "agenda" ? "block" : "block sm:hidden"}>
-              <div className="space-y-3 pt-2">
-                {monthEventsList.length > 0 ? (
-                  monthEventsList.map(({ dateKey, day, event }) => {
-                    const isEkadashi = event.color === "blue";
-                    const isSelected = selectedDateKey === dateKey;
-                    const dateObj = new Date(currentYear, currentMonth, day);
-                    const weekday = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-                    const isToday =
-                      today.getDate() === day &&
-                      today.getMonth() === currentMonth &&
-                      today.getFullYear() === currentYear;
-
-                    return (
-                      <div
-                        key={dateKey}
-                        onClick={() => setSelectedDateKey(isSelected ? null : dateKey)}
-                        className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer ${isSelected
-                            ? "ring-2 ring-amber-500 border-amber-400 bg-amber-50/80 shadow-md"
-                            : isToday
-                              ? "ring-2 ring-amber-500 border-amber-400 bg-amber-50/80 shadow-md"
-                              : isEkadashi
-                                ? "bg-amber-50/30 border-amber-200 hover:border-amber-300 hover:bg-amber-50/70"
-                                : "bg-amber-50/40 border-amber-200 hover:border-amber-300 hover:bg-amber-50/80"
-                          }`}
-                      >
-                        {/* Left Block: Date Badge & Event Details */}
-                        <div className="flex items-start gap-4">
-                          {/* Date badge */}
-                          <div
-                            className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl shrink-0 font-bold border shadow-xs ${isToday
-                                ? "bg-amber-600 text-white border-amber-700 ring-2 ring-amber-400"
-                                : isEkadashi
-                                  ? "bg-amber-700 text-white border-amber-800"
-                                  : "bg-amber-600 text-white border-amber-700"
-                              }`}
-                          >
-                            <span className="text-lg leading-none">{day}</span>
-                            <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90 mt-0.5">
-                              {weekday}
-                            </span>
-                          </div>
-
-                          {/* Title & Info */}
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              {isToday && (
-                                <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-900 bg-amber-200 px-2 py-0.5 rounded-full border border-amber-300">
-                                  Today
-                                </span>
-                              )}
-                              <span
-                                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200"
-                              >
-                                {isEkadashi ? (
-                                  <>
-                                    <Moon className="w-2.5 h-2.5 fill-current" />
-                                    <span>Ekadashi Fasting</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Sparkle className="w-2.5 h-2.5 fill-current" />
-                                    <span>Festival</span>
-                                  </>
-                                )}
-                              </span>
-                            </div>
-
-                            <h4 className="font-serif text-base sm:text-lg font-normal text-slate-900 leading-snug">
-                              {event.name}
-                            </h4>
-
-                            {event.fasting && (
-                              <p className="text-xs text-amber-900 flex items-center gap-1.5 font-medium">
-                                <Clock className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-                                <span>{event.fasting}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right: CTA Arrow */}
-                        <div className="flex items-center justify-end sm:justify-center">
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-900">
-                            <span>Details</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="p-8 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-3">
-                    <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto">
-                      <Sun className="w-6 h-6" />
-                    </div>
-                    <h4 className="font-serif text-base sm:text-lg font-normal text-slate-800">
-                      No Special Festival Recorded for {monthNames[currentMonth]}
-                    </h4>
-                    <p className="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
-                      Daily Mangal Aarti, Deity Darshan, Raj Bhog Aarti, and Srimad
-                      Bhagavatam discourses are conducted every day at the temple.
-                    </p>
-                    <a
-                      href="#schedule"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 hover:text-amber-900 transition-colors"
-                    >
-                      <span>View Daily Schedule</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
 

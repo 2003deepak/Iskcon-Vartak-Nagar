@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import EventPreviewModal, { PreviewEventData } from "@/components/EventPreviewModal";
 import { generateSlug } from "@/lib/slug-utils";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export interface ScheduleItem {
   time: string;
@@ -20,7 +21,6 @@ export interface ImageMetaInfo {
   mimeType?: string;
   width?: number;
   height?: number;
-  provider?: string;
 }
 
 export interface AdminProgramEvent {
@@ -69,13 +69,6 @@ const CATEGORY_OPTIONS = [
   { id: "Spiritual Retreat", label: "Spiritual Retreat", color: "rose", icon: "🏔️" },
   { id: "Guest Speaker", label: "Guest Speaker Discourse", color: "amber", icon: "🎤" },
   { id: "Temple Announcement", label: "Temple Announcement", color: "slate", icon: "📢" },
-];
-
-const DEFAULT_BANNER_PRESETS = [
-  { label: "Radha Krishna Altar", url: "https://ik.imagekit.io/9uy2us6yw/LandingPage/download?updatedAt=1752604090619" },
-  { label: "Gaura Nitai", url: "/gaur_nitai.jpeg" },
-  { label: "Srila Prabhupada", url: "/srila_prabhupada.jpeg" },
-  { label: "Temple Courtyard", url: "/hero_bg.jpeg" },
 ];
 
 export default function AdminEventsPage() {
@@ -147,8 +140,10 @@ export default function AdminEventsPage() {
   const [formPublishAt, setFormPublishAt] = useState<string>("");
   const [formUnpublishAt, setFormUnpublishAt] = useState<string>("");
 
-  // Image Upload State
-  const [isUploadingImage, setIsUploadingImage] = useState<boolean>(false);
+  // Image Upload & Staged File State
+  const [selectedBannerFile, setSelectedBannerFile] = useState<File | null>(null);
+  const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string>("");
+  const [savingStatusText, setSavingStatusText] = useState<string>("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [previewAspectRatio, setPreviewAspectRatio] = useState<"contain" | "16-9" | "3-4">("contain");
 
@@ -172,7 +167,7 @@ export default function AdminEventsPage() {
       if (selectedFeatured !== "all") params.append("isFeatured", selectedFeatured === "featured" ? "true" : "false");
       params.append("sortBy", sortBy);
 
-      const res = await fetch(`/api/admin/events?${params.toString()}`);
+      const res = await adminFetch(`/api/admin/events?${params.toString()}`);
       const data = await res.json();
 
       if (res.ok && data.success) {
@@ -202,6 +197,11 @@ export default function AdminEventsPage() {
 
   // Open Create Modal
   const handleOpenCreateModal = () => {
+    if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreviewUrl);
+    }
+    setSelectedBannerFile(null);
+    setBannerPreviewUrl("");
     setEditingEventId(null);
     setFormErrors({});
     setActiveFormTab("basic");
@@ -223,7 +223,7 @@ export default function AdminEventsPage() {
     setFormLocation("Main Temple Hall, ISKCON Vartak Nagar, Thane");
     setFormVenue("Main Temple Courtyard");
     setFormMapLink("");
-    setFormBannerUrl(DEFAULT_BANNER_PRESETS[0].url);
+    setFormBannerUrl("");
     setFormBannerMeta(undefined);
     setFormThumbnailUrl("");
     setFormHighlights([
@@ -252,6 +252,11 @@ export default function AdminEventsPage() {
 
   // Open Edit Modal
   const handleOpenEditModal = (ev: AdminProgramEvent) => {
+    if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreviewUrl);
+    }
+    setSelectedBannerFile(null);
+    setBannerPreviewUrl("");
     setEditingEventId(ev._id || null);
     setFormErrors({});
     setActiveFormTab("basic");
@@ -317,33 +322,65 @@ export default function AdminEventsPage() {
     setFormSchedule(formSchedule.filter((_, i) => i !== index));
   };
 
-  // Handle Image Upload
-  const handleFileUpload = async (file: File) => {
-    setIsUploadingImage(true);
+  // Handle Local File Selection (Deferred Upload to ImageKit on Event Submit)
+  const handleFileSelect = (file: File) => {
     setUploadError(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "Events");
 
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setFormBannerUrl(data.image.url);
-        setFormBannerMeta(data.image);
-        showToast(`Image "${file.name}" uploaded successfully via ${data.image.provider}!`);
-      } else {
-        setUploadError(data.error || "Failed to upload image.");
-      }
-    } catch (err: any) {
-      setUploadError(err?.message || "An upload error occurred.");
-    } finally {
-      setIsUploadingImage(false);
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Please select a valid image file (JPEG, PNG, WebP, GIF, or AVIF).");
+      return;
     }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError("Image file size exceeds 10 MB limit.");
+      return;
+    }
+
+    // Revoke previous blob url if any
+    if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreviewUrl);
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    setSelectedBannerFile(file);
+    setBannerPreviewUrl(objectUrl);
+
+    // Extract natural dimensions locally for immediate preview display
+    const img = new window.Image();
+    img.onload = () => {
+      setFormBannerMeta({
+        url: objectUrl,
+        filename: file.name,
+        size: file.size,
+        mimeType: file.type,
+        width: img.naturalWidth,
+        height: img.naturalHeight,
+      });
+    };
+    img.src = objectUrl;
+  };
+
+  // Remove Selected Local File
+  const handleRemoveSelectedFile = () => {
+    if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreviewUrl);
+    }
+    setSelectedBannerFile(null);
+    setBannerPreviewUrl("");
+    setFormBannerMeta(undefined);
+    setUploadError(null);
+  };
+
+  // Select Preset Banner
+  const handleSelectPreset = (url: string) => {
+    if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(bannerPreviewUrl);
+    }
+    setSelectedBannerFile(null);
+    setBannerPreviewUrl("");
+    setFormBannerUrl(url);
+    setFormBannerMeta(undefined);
+    setUploadError(null);
   };
 
   // Save Event (Create or Update)
@@ -354,7 +391,11 @@ export default function AdminEventsPage() {
     const errors: Record<string, string> = {};
     if (!formTitle.trim()) errors.title = "Event title is required.";
     if (!formDescription.trim()) errors.description = "Full event description is required.";
-    if (!formBannerUrl.trim()) errors.bannerUrl = "Banner image URL is required.";
+
+    const hasBanner = Boolean(selectedBannerFile || formBannerUrl.trim());
+    if (!hasBanner) {
+      errors.bannerUrl = "Banner image is required.";
+    }
 
     const computedDate = formDisplayDate.trim() || formStartDate.trim() || "Upcoming";
     const computedTime =
@@ -367,7 +408,34 @@ export default function AdminEventsPage() {
     }
 
     setIsSaving(true);
+    setSavingStatusText("Preparing to save...");
+
     try {
+      let finalBannerUrl = formBannerUrl.trim();
+      let finalBannerMeta = formBannerMeta;
+
+      // When the event form is submitted: upload the image to ImageKit if a local file was selected
+      if (selectedBannerFile) {
+        setSavingStatusText("Uploading banner image to ImageKit...");
+        const formData = new FormData();
+        formData.append("file", selectedBannerFile);
+        formData.append("folder", "Events");
+
+        const uploadRes = await adminFetch("/api/admin/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || !uploadData.success) {
+          throw new Error(uploadData.error || "Failed to upload image to ImageKit.");
+        }
+
+        finalBannerUrl = uploadData.image.url;
+        finalBannerMeta = uploadData.image;
+      }
+
+      setSavingStatusText("Saving event to database...");
       const payload = {
         title: formTitle.trim(),
         slug: formSlug.trim() || generateSlug(formTitle),
@@ -385,9 +453,9 @@ export default function AdminEventsPage() {
         location: formLocation.trim(),
         venue: formVenue.trim(),
         mapLink: formMapLink.trim(),
-        bannerUrl: formBannerUrl.trim(),
-        bannerImageMeta: formBannerMeta,
-        thumbnailUrl: formThumbnailUrl.trim() || formBannerUrl.trim(),
+        bannerUrl: finalBannerUrl,
+        bannerImageMeta: finalBannerMeta,
+        thumbnailUrl: formThumbnailUrl.trim() || finalBannerUrl,
         highlights: formHighlights,
         schedule: formSchedule,
         status: formStatus,
@@ -400,7 +468,7 @@ export default function AdminEventsPage() {
       const url = editingEventId ? `/api/admin/events/${editingEventId}` : `/api/admin/events`;
       const method = editingEventId ? "PUT" : "POST";
 
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -409,6 +477,11 @@ export default function AdminEventsPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        if (bannerPreviewUrl && bannerPreviewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(bannerPreviewUrl);
+        }
+        setSelectedBannerFile(null);
+        setBannerPreviewUrl("");
         setIsFormModalOpen(false);
         showToast(
           editingEventId
@@ -423,6 +496,7 @@ export default function AdminEventsPage() {
       setFormErrors({ general: err?.message || "An unexpected error occurred." });
     } finally {
       setIsSaving(false);
+      setSavingStatusText("");
     }
   };
 
@@ -430,7 +504,7 @@ export default function AdminEventsPage() {
   const handleToggleStatus = async (event: AdminProgramEvent) => {
     const nextStatus = event.status === "published" || event.status === "upcoming" ? "draft" : "published";
     try {
-      const res = await fetch(`/api/admin/events/${event._id}`, {
+      const res = await adminFetch(`/api/admin/events/${event._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -452,7 +526,7 @@ export default function AdminEventsPage() {
     if (!deleteTarget?._id) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/admin/events/${deleteTarget._id}`, {
+      const res = await adminFetch(`/api/admin/events/${deleteTarget._id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -1126,61 +1200,105 @@ export default function AdminEventsPage() {
               {activeFormTab === "media" && (
                 <div className="space-y-4 animate-fadeIn">
                   {/* Uploader Box */}
-                  <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
+                  <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3.5">
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                          <span>Upload Banner Image</span>
-                          <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-mono font-normal">
-                            ImageKit.io CDN
-                          </span>
+                          <span>Event Banner Image</span>
+
                         </div>
-                        <div className="text-[10px] text-slate-400">
-                          Supports 16:9 landscape banners, 3:4 portrait flyers, and square posters up to 10MB. Automatically uploaded to ImageKit and saved in database.
-                        </div>
+
                       </div>
-                      {isUploadingImage && (
-                        <div className="flex items-center gap-2 text-amber-400 text-xs font-medium">
-                          <div className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-                          <span>Uploading to ImageKit...</span>
-                        </div>
-                      )}
                     </div>
 
-                    {/* File Input */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        id="banner-file-input"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file);
-                        }}
-                        className="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer"
-                      />
-                    </div>
+                    {/* Staged File Status Box or File Input */}
+                    {selectedBannerFile ? (
+                      <div className="p-3 bg-emerald-950/40 border border-emerald-500/40 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-300 font-bold text-base shrink-0">
+                            🖼️
+                          </div>
+                          <div>
+                            <div className="text-xs font-bold text-emerald-200 truncate max-w-xs sm:max-w-md">
+                              {selectedBannerFile.name}
+                            </div>
+                            <div className="text-[10px] text-emerald-400 font-mono mt-0.5 flex items-center gap-2">
+                              <span>{(selectedBannerFile.size / 1024).toFixed(1)} KB</span>
+
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <label
+                            htmlFor="banner-file-replace"
+                            className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition cursor-pointer"
+                          >
+                            Replace
+                            <input
+                              type="file"
+                              accept="image/*"
+                              id="banner-file-replace"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleFileSelect(file);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleRemoveSelectedFile}
+                            className="px-3 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-500/30 text-[11px] font-semibold transition cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            id="banner-file-input"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleFileSelect(file);
+                            }}
+                            className="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer"
+                          />
+                        </div>
+
+
+                      </div>
+                    )}
 
                     {uploadError && (
                       <div className="p-2.5 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-300 text-[11px]">
                         {uploadError}
                       </div>
                     )}
+                    {formErrors.bannerUrl && (
+                      <div className="p-2.5 rounded-lg bg-rose-950/50 border border-rose-500/50 text-rose-300 text-[11px]">
+                        {formErrors.bannerUrl}
+                      </div>
+                    )}
                   </div>
 
                   {/* Live Banner Preview Card */}
-                  {formBannerUrl && (
+                  {(bannerPreviewUrl || formBannerUrl) && (
                     <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold text-slate-200">Image Preview</span>
+                          <span className="text-[11px] font-bold text-slate-200">Live Image Preview</span>
                           {formBannerMeta && (
                             <span className="text-slate-400 text-[10px] font-mono">
                               {formBannerMeta.width && formBannerMeta.height
                                 ? `${formBannerMeta.width} × ${formBannerMeta.height} px • `
                                 : ""}
                               {formBannerMeta.size ? `${(formBannerMeta.size / 1024).toFixed(1)} KB • ` : ""}
-                              <span className="text-emerald-400 font-semibold">{formBannerMeta.provider || "imagekit"}</span>
+
                             </span>
                           )}
                         </div>
@@ -1190,33 +1308,30 @@ export default function AdminEventsPage() {
                           <button
                             type="button"
                             onClick={() => setPreviewAspectRatio("contain")}
-                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${
-                              previewAspectRatio === "contain"
-                                ? "bg-amber-500 text-slate-950 font-bold"
-                                : "text-slate-400 hover:text-white"
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${previewAspectRatio === "contain"
+                              ? "bg-amber-500 text-slate-950 font-bold"
+                              : "text-slate-400 hover:text-white"
+                              }`}
                           >
                             Adaptive Glow (Full)
                           </button>
                           <button
                             type="button"
                             onClick={() => setPreviewAspectRatio("16-9")}
-                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${
-                              previewAspectRatio === "16-9"
-                                ? "bg-amber-500 text-slate-950 font-bold"
-                                : "text-slate-400 hover:text-white"
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${previewAspectRatio === "16-9"
+                              ? "bg-amber-500 text-slate-950 font-bold"
+                              : "text-slate-400 hover:text-white"
+                              }`}
                           >
                             16:9 Banner
                           </button>
                           <button
                             type="button"
                             onClick={() => setPreviewAspectRatio("3-4")}
-                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${
-                              previewAspectRatio === "3-4"
-                                ? "bg-amber-500 text-slate-950 font-bold"
-                                : "text-slate-400 hover:text-white"
-                            }`}
+                            className={`px-2.5 py-1 rounded-lg transition cursor-pointer font-medium ${previewAspectRatio === "3-4"
+                              ? "bg-amber-500 text-slate-950 font-bold"
+                              : "text-slate-400 hover:text-white"
+                              }`}
                           >
                             3:4 Poster
                           </button>
@@ -1225,19 +1340,19 @@ export default function AdminEventsPage() {
 
                       {/* Display Canvas */}
                       <div
-                        className={`relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center transition-all ${
-                          previewAspectRatio === "3-4"
-                            ? "h-80 sm:h-96"
-                            : previewAspectRatio === "16-9"
+                        className={`relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center transition-all ${previewAspectRatio === "3-4"
+                          ? "h-80 sm:h-96"
+                          : previewAspectRatio === "16-9"
                             ? "h-52 sm:h-64"
                             : "min-h-[220px] sm:min-h-[300px] h-[35vh]"
-                        }`}
+                          }`}
                       >
                         {/* Ambient Blurred Background Glow */}
                         <Image
-                          src={formBannerUrl}
+                          src={bannerPreviewUrl || formBannerUrl}
                           alt=""
                           fill
+                          sizes="100vw"
                           className="object-cover blur-2xl scale-110 opacity-35 pointer-events-none"
                           unoptimized
                           aria-hidden="true"
@@ -1245,7 +1360,7 @@ export default function AdminEventsPage() {
                         {/* Main Contained / Scaled Image */}
                         <div className="relative w-full h-full p-2 flex items-center justify-center">
                           <Image
-                            src={formBannerUrl}
+                            src={bannerPreviewUrl || formBannerUrl}
                             alt="Banner Preview"
                             fill
                             sizes="(max-width: 768px) 100vw, 672px"
@@ -1256,34 +1371,6 @@ export default function AdminEventsPage() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
                         <div className="absolute bottom-3 left-3 text-white font-bold text-sm drop-shadow-md z-10">
                           {formTitle || "Event Title Preview"}
-                        </div>
-                      </div>
-
-                      {/* ImageKit URL Information Box */}
-                      <div className="p-2.5 bg-slate-900/90 border border-slate-800 rounded-xl flex items-center justify-between gap-3 text-xs">
-                        <div className="overflow-hidden">
-                          <div className="text-[10px] uppercase font-bold text-slate-400">Public CDN URL (Stored in Database)</div>
-                          <div className="text-amber-300 font-mono text-[11px] truncate select-all">{formBannerUrl}</div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(formBannerUrl);
-                              showToast("ImageKit Public URL copied to clipboard!");
-                            }}
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium border border-slate-700 transition cursor-pointer"
-                          >
-                            📋 Copy URL
-                          </button>
-                          <a
-                            href={formBannerUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium border border-slate-700 transition"
-                          >
-                            🔗 Open
-                          </a>
                         </div>
                       </div>
                     </div>
@@ -1494,7 +1581,7 @@ export default function AdminEventsPage() {
                       time: formDisplayTime || "5:00 PM – 9:30 PM",
                       location: formLocation,
                       venue: formVenue,
-                      bannerUrl: formBannerUrl,
+                      bannerUrl: bannerPreviewUrl || formBannerUrl,
                       description: formDescription,
                       highlights: formHighlights,
                       schedule: formSchedule,
@@ -1524,7 +1611,7 @@ export default function AdminEventsPage() {
                     {isSaving ? (
                       <>
                         <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
-                        <span>Saving...</span>
+                        <span>{savingStatusText || (editingEventId ? "Updating..." : "Creating...")}</span>
                       </>
                     ) : (
                       <span>{editingEventId ? "Update Event" : "Create & Save Event"}</span>

@@ -123,7 +123,7 @@ export default function ExperienceCards() {
                       arrow_forward
                     </span>
                   </span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400/40 group-hover:bg-amber-400 transition-colors" />
+
                 </div>
               </div>
             </ScrollReveal>

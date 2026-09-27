@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export default function AdminSettingsPage() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -22,7 +23,7 @@ export default function AdminSettingsPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/admin/auth/change-password", {
+      const res = await adminFetch("/api/admin/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -72,8 +73,8 @@ export default function AdminSettingsPage() {
           {message && (
             <div
               className={`p-3 rounded-xl text-xs mb-4 flex items-start gap-2.5 ${message.type === "success"
-                  ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
-                  : "bg-red-950/40 border border-red-800 text-red-300"
+                ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
+                : "bg-red-950/40 border border-red-800 text-red-300"
                 }`}
             >
               <span>{message.text}</span>

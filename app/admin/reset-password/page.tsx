@@ -2,6 +2,7 @@
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 
 function ResetPasswordForm() {
@@ -83,10 +84,10 @@ function ResetPasswordForm() {
       <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-amber-500/20 to-amber-600/5 border border-amber-500/30 shadow-lg shadow-amber-950/40 mb-4 backdrop-blur-md">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center shadow-inner text-white font-bold text-xl">
-              🛡️
-            </div>
+          <div className="inline-flex items-center justify-center p-3 mb-4 backdrop-blur-md">
+
+            <Image src="/logo_white.png" alt="Logo" width={85} height={85} />
+
           </div>
           <h1 className="font-serif text-3xl font-semibold tracking-wide text-white mb-1">
             Set New Password

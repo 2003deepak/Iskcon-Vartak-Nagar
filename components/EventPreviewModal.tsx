@@ -65,6 +65,7 @@ export default function EventPreviewModal({
                   src={event.bannerUrl}
                   alt=""
                   fill
+                  sizes="100vw"
                   className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
                   unoptimized
                   aria-hidden="true"

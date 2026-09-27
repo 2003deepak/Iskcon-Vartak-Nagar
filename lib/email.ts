@@ -1,8 +1,11 @@
+import nodemailer from "nodemailer";
+
 export interface SendEmailOptions {
   to: string;
   subject: string;
   html: string;
   text?: string;
+  from?: string;
 }
 
 export interface PasswordResetEmailParams {
@@ -12,20 +15,52 @@ export interface PasswordResetEmailParams {
 }
 
 /**
- * Sends an email using configured SMTP or logs an audit event in development mode
+ * Creates and returns a Nodemailer Transporter using environment configurations
  */
-export async function sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
-  const emailFrom = process.env.EMAIL_FROM || "ISKCON Vartak Nagar Admin <noreply@iskcon-tvn.org>";
+function getEmailTransporter() {
+
   const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT;
+  const smtpPort = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
+  const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 
-  // If SMTP is not yet configured, provide a clean abstraction and mock execution
   if (!smtpHost || !smtpUser || !smtpPass) {
+    return null;
+  }
+
+  return nodemailer.createTransport({
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpSecure,
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+    tls: {
+      rejectUnauthorized: process.env.NODE_ENV === "production",
+    },
+  });
+}
+
+/**
+ * Sends an email using Nodemailer (SMTP) or falls back to mock logger in development
+ */
+export async function sendEmail(
+  options: SendEmailOptions
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  const emailFrom =
+    options.from ||
+    process.env.EMAIL_FROM ||
+    `"ISKCON Vartak Nagar" <${process.env.SMTP_USER || "noreply@iskcon-tvn.org"}>`;
+
+  const transporter = getEmailTransporter();
+
+  // If SMTP is not yet configured, log mock dispatch for local development
+  if (!transporter) {
     if (process.env.NODE_ENV !== "production") {
       console.info(
-        `[Email Service] Mock email dispatch to: ${options.to.replace(/(.{2})(.*)(@.*)/, "$1***$3")} | Subject: ${options.subject}`
+        `[Email Service (Mock)] Sent to: ${options.to} | Subject: ${options.subject}`
       );
     }
     return {
@@ -34,18 +69,24 @@ export async function sendEmail(options: SendEmailOptions): Promise<{ success: b
     };
   }
 
-  // If SMTP is configured, we can use nodemailer or standard fetch if a REST provider is set
   try {
-    // Standard transport placeholder for production configuration
+    const info = await transporter.sendMail({
+      from: emailFrom,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+
     return {
       success: true,
-      messageId: `smtp-${Date.now()}`,
+      messageId: info.messageId,
     };
   } catch (err: any) {
-    console.error("[Email Service] Delivery failure:", err.message);
+    console.error("[Email Service] Nodemailer delivery failure:", err);
     return {
       success: false,
-      error: "Failed to dispatch email",
+      error: err.message || "Failed to dispatch email",
     };
   }
 }

@@ -2,17 +2,19 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IAuditLog extends Document {
   action:
-    | "CREATE_EVENT"
-    | "UPDATE_EVENT"
-    | "PUBLISH_EVENT"
-    | "UNPUBLISH_EVENT"
-    | "DELETE_EVENT"
-    | "UPLOAD_IMAGE"
-    | "CALENDAR_CREATE"
-    | "CALENDAR_UPDATE"
-    | "CALENDAR_DELETE"
-    | "ADMIN_LOGIN"
-    | "ADMIN_LOGOUT";
+  | "CREATE_EVENT"
+  | "UPDATE_EVENT"
+  | "PUBLISH_EVENT"
+  | "UNPUBLISH_EVENT"
+  | "DELETE_EVENT"
+  | "UPLOAD_IMAGE"
+  | "CALENDAR_CREATE"
+  | "CALENDAR_UPDATE"
+  | "CALENDAR_DELETE"
+  | "ADMIN_LOGIN"
+  | "ADMIN_LOGOUT"
+  | "UPDATE_MEDIA"
+  | "DELETE_MEDIA";
   entityType: "Event" | "Calendar" | "Media" | "User" | "Auth";
   entityId?: string;
   entityTitle?: string;

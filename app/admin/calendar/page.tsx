@@ -19,6 +19,7 @@ import {
   generateMonthGrid,
   CalendarGridDay,
 } from "@/lib/calendar-date-utils";
+import { adminFetch } from "@/lib/admin-fetch";
 
 export interface ParanaDetailsData {
   date?: string;
@@ -140,7 +141,7 @@ export default function AdminCalendarPage() {
       if (selectedFasting !== "all") params.append("isFast", selectedFasting === "fast" ? "true" : "false");
       if (searchQuery.trim().length > 0) params.append("search", searchQuery.trim());
 
-      const res = await fetch(`/api/admin/calendar?${params.toString()}`);
+      const res = await adminFetch(`/api/admin/calendar?${params.toString()}`);
       const data = await res.json();
 
       if (res.ok && data.success) {
@@ -315,7 +316,7 @@ export default function AdminCalendarPage() {
     if (!deleteTarget?._id) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`/api/admin/calendar/${deleteTarget._id}`, {
+      const res = await adminFetch(`/api/admin/calendar/${deleteTarget._id}`, {
         method: "DELETE",
       });
       const data = await res.json();
@@ -341,7 +342,7 @@ export default function AdminCalendarPage() {
     }
     setImportValidating(true);
     try {
-      const res = await fetch("/api/admin/calendar/bulk-import", {
+      const res = await adminFetch("/api/admin/calendar/bulk-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -368,7 +369,7 @@ export default function AdminCalendarPage() {
     if (!importPreviewData) return;
     setIsImportingConfirmed(true);
     try {
-      const res = await fetch("/api/admin/calendar/bulk-import", {
+      const res = await adminFetch("/api/admin/calendar/bulk-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
