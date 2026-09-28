@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import MediaItem, { MediaType, MediaCategory } from "@/models/MediaItem";
-import AuditLog from "@/models/AuditLog";
 import { getAuthenticatedAdmin } from "@/lib/auth";
 import {
   extractYouTubeVideoId,
@@ -112,8 +111,8 @@ export async function GET(request: NextRequest) {
         description: item.description || "",
         mediaType: item.mediaType,
         category: item.category,
-        subcategory: item.subcategory || "",
         imageUrl: item.imageUrl,
+        images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.imageUrl].filter(Boolean),
         externalUrl: item.externalUrl || null,
         youtubeVideoId: item.youtubeVideoId || null,
         eventDate: item.eventDate || "",
@@ -135,7 +134,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/admin/media
- * Create a new Media Item with backend URL validation and audit logging.
+ * Create a new Media Item with backend URL validation and up to 10 photos.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -153,8 +152,8 @@ export async function POST(request: NextRequest) {
       description = "",
       mediaType = "IMAGE",
       category = "Darshan",
-      subcategory = "",
       imageUrl,
+      images = [],
       externalUrl = "",
       eventDate = new Date().toISOString().slice(0, 10),
       isFeatured = false,
@@ -170,23 +169,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Validation: Media Type & URL Processing
+    // 2. Validation: Media Type & Images (up to 10)
     let finalImageUrl = (imageUrl || "").trim();
+    let sanitizedImages: string[] = Array.isArray(images)
+      ? images.map((u: any) => String(u).trim()).filter((u: string) => u.length > 0)
+      : [];
+
+    if (!finalImageUrl && sanitizedImages.length > 0) {
+      finalImageUrl = sanitizedImages[0];
+    } else if (finalImageUrl && !sanitizedImages.includes(finalImageUrl)) {
+      sanitizedImages.unshift(finalImageUrl);
+    }
+
+    // Restrict max 10 photos
+    sanitizedImages = sanitizedImages.slice(0, 10);
+
     let finalExternalUrl = (externalUrl || "").trim();
     let youtubeVideoId: string | undefined = undefined;
 
     const upperMediaType = (mediaType as string).toUpperCase() as MediaType;
 
     if (upperMediaType === "IMAGE") {
-      if (!finalImageUrl) {
+      if (!finalImageUrl && sanitizedImages.length === 0) {
         return NextResponse.json(
-          { success: false, error: "Image URL is required for Image media type." },
-          { status: 400 }
-        );
-      }
-      if (!isValidHttpUrl(finalImageUrl)) {
-        return NextResponse.json(
-          { success: false, error: "Invalid image URL format. Please provide a valid HTTP/HTTPS link." },
+          { success: false, error: "At least one image is required for Image media type." },
           { status: 400 }
         );
       }
@@ -208,6 +214,9 @@ export async function POST(request: NextRequest) {
       if (!finalImageUrl) {
         finalImageUrl = getYouTubeThumbnail(extractedId, "maxres");
       }
+      if (sanitizedImages.length === 0 && finalImageUrl) {
+        sanitizedImages = [finalImageUrl];
+      }
     } else if (upperMediaType === "INSTAGRAM_REEL") {
       if (!finalExternalUrl) {
         return NextResponse.json(
@@ -221,9 +230,11 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      // If no custom image provided for Instagram reel, use standard fallback placeholder
       if (!finalImageUrl) {
         finalImageUrl = "/hero_bg.jpeg";
+      }
+      if (sanitizedImages.length === 0 && finalImageUrl) {
+        sanitizedImages = [finalImageUrl];
       }
     } else {
       return NextResponse.json(
@@ -239,8 +250,8 @@ export async function POST(request: NextRequest) {
       description: description.trim(),
       mediaType: upperMediaType,
       category: category as MediaCategory,
-      subcategory: subcategory.trim(),
       imageUrl: finalImageUrl,
+      images: sanitizedImages,
       externalUrl: finalExternalUrl || undefined,
       youtubeVideoId,
       eventDate: eventDate.trim(),
@@ -258,33 +269,6 @@ export async function POST(request: NextRequest) {
         email: adminContext.user.email,
       },
     });
-
-    // Audit logging
-    try {
-      await AuditLog.create({
-        action: "CREATE_MEDIA",
-        entityType: "Media",
-        entityId: newMedia._id?.toString(),
-        entityTitle: newMedia.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          mediaType: newMedia.mediaType,
-          category: newMedia.category,
-          imageUrl: newMedia.imageUrl,
-          isPublished: newMedia.isPublished,
-          isFeatured: newMedia.isFeatured,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Warning]:", auditErr);
-    }
 
     return NextResponse.json({
       success: true,

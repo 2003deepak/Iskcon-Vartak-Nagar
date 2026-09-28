@@ -2,13 +2,10 @@ import { MediaCategory, MediaType } from "@/models/MediaItem";
 
 export const MEDIA_CATEGORIES: { id: MediaCategory; label: string; icon: string; description: string }[] = [
   { id: "Darshan", label: "Darshan", icon: "🪷", description: "Daily divine deity darshan & sringar" },
-  { id: "Gaur Nitai", label: "Gaur Nitai", icon: "✨", description: "Sri Sri Gaura Nitai altar darshan" },
-  { id: "Deities", label: "Deities", icon: "👑", description: "Temple deities, Radha Krishna, Prabhupada" },
   { id: "Festival", label: "Festival", icon: "🎪", description: "Grand festival celebrations & abhishekham" },
   { id: "Kirtan", label: "Kirtan", icon: "🎶", description: "Congregational sankirtan & maha aarti" },
-  { id: "Community Seva", label: "Community Seva", icon: "🤝", description: "Food for life prasadam & outreach" },
-  { id: "Spiritual", label: "Spiritual", icon: "📖", description: "Vedic wisdom, discourses & retreats" },
-  { id: "Other", label: "Other", icon: "📸", description: "Temple architecture & announcements" },
+  { id: "Yatra", label: "Yatra", icon: "🚩", description: "Yatra" },
+  { id: "Community Seva", label: "Community Seva", icon: "🤝", description: "Seva" }
 ];
 
 export const MEDIA_TYPES: { id: MediaType; label: string; icon: string }[] = [

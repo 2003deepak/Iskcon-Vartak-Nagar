@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 
 interface MediaRecord {
@@ -17,6 +18,7 @@ interface MediaRecord {
   tag: string;
   aspectSpan: string;
   isFeatured?: boolean;
+  images?: string[];
 }
 
 const fallbackMediaItems: MediaRecord[] = [
@@ -78,19 +80,63 @@ const fallbackMediaItems: MediaRecord[] = [
 const categoryList = [
   "All",
   "Darshan",
-  "Gaur Nitai",
-  "Deities",
   "Festival",
   "Kirtan",
+  "Yatra",
   "Community Seva",
-  "Spiritual",
 ];
 
 export default function GallerySection() {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeMedia, setActiveMedia] = useState<MediaRecord | null>(null);
+  const [activePhotoIndex, setActivePhotoIndex] = useState<number>(0);
   const [items, setItems] = useState<MediaRecord[]>(fallbackMediaItems);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Derive photos for the active media item
+  const activePhotos = activeMedia
+    ? Array.isArray(activeMedia.images) && activeMedia.images.length > 0
+      ? activeMedia.images
+      : [activeMedia.src].filter(Boolean)
+    : [];
+
+  const handleOpenMedia = (item: MediaRecord) => {
+    setActiveMedia(item);
+    setActivePhotoIndex(0);
+  };
+
+  const handlePrevPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (activePhotos.length <= 1) return;
+    setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : activePhotos.length - 1));
+  };
+
+  const handleNextPhoto = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (activePhotos.length <= 1) return;
+    setActivePhotoIndex((prev) => (prev < activePhotos.length - 1 ? prev + 1 : 0));
+  };
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!activeMedia) return;
+      if (e.key === "Escape") setActiveMedia(null);
+      if (e.key === "ArrowLeft") {
+        if (activePhotos.length > 1) {
+          setActivePhotoIndex((prev) => (prev > 0 ? prev - 1 : activePhotos.length - 1));
+        }
+      }
+      if (e.key === "ArrowRight") {
+        if (activePhotos.length > 1) {
+          setActivePhotoIndex((prev) => (prev < activePhotos.length - 1 ? prev + 1 : 0));
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeMedia, activePhotos.length]);
 
   useEffect(() => {
     async function fetchGalleryMedia() {
@@ -98,8 +144,14 @@ export default function GallerySection() {
         const res = await fetch("/api/media?published=true");
         if (!res.ok) return;
         const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const mapped: MediaRecord[] = json.data.map((item: any, idx: number) => {
+        const rawList = Array.isArray(json.items)
+          ? json.items
+          : Array.isArray(json.data)
+            ? json.data
+            : [];
+
+        if (json.success && rawList.length > 0) {
+          const mapped: MediaRecord[] = rawList.map((item: any, idx: number) => {
             const isVideo = item.mediaType === "YOUTUBE" || item.mediaType === "INSTAGRAM_REEL";
             let embedUrl = undefined;
             if (item.mediaType === "YOUTUBE" && item.youtubeVideoId) {
@@ -117,16 +169,17 @@ export default function GallerySection() {
             return {
               id: item.id || item._id || `media-${idx}`,
               title: item.title,
-              subtitle: item.description || (item.subcategory ? `${item.category} • ${item.subcategory}` : item.category),
+              subtitle: item.description || item.category,
               category: item.category,
               type: isVideo ? "video" : "image",
               src: item.imageUrl || (item.youtubeVideoId ? `https://img.youtube.com/vi/${item.youtubeVideoId}/hqdefault.jpg` : "/gaur_nitai.jpeg"),
               externalUrl: item.externalUrl,
               videoEmbedUrl: embedUrl,
               duration: item.mediaType === "YOUTUBE" ? "YouTube" : item.mediaType === "INSTAGRAM_REEL" ? "Instagram Reel" : undefined,
-              tag: item.subcategory || item.category,
+              tag: item.category,
               aspectSpan: span,
               isFeatured: item.isFeatured,
+              images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.imageUrl].filter(Boolean),
             };
           });
           setItems(mapped);
@@ -169,17 +222,15 @@ export default function GallerySection() {
             </div>
 
             <div className="flex items-center gap-3 self-start md:self-end">
-              <a
+              <Link
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-amber-900 hover:text-amber-950 text-xs font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 shadow-xs transition-all duration-200 cursor-pointer"
-                href="https://www.instagram.com/iskconvartaknagarthane/"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/media"
               >
-                <span>Instagram Feed</span>
+                <span>More Media</span>
                 <span className="material-symbols-outlined text-sm">
                   arrow_forward
                 </span>
-              </a>
+              </Link>
             </div>
           </div>
         </ScrollReveal>
@@ -191,11 +242,10 @@ export default function GallerySection() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap cursor-pointer ${
-                  selectedCategory === cat
-                    ? "bg-[#0a1628] text-white shadow-md shadow-slate-950/20"
-                    : "bg-white text-slate-600 hover:text-slate-900 border border-stone-200/90 hover:border-stone-300"
-                }`}
+                className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap cursor-pointer ${selectedCategory === cat
+                  ? "bg-[#0a1628] text-white shadow-md shadow-slate-950/20"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-stone-200/90 hover:border-stone-300"
+                  }`}
               >
                 {cat}
               </button>
@@ -225,16 +275,15 @@ export default function GallerySection() {
                 key={item.id}
                 variant="fade-up"
                 delay={idx * 60}
-                className={`${
-                  selectedCategory === "All" ? item.aspectSpan : "lg:col-span-6"
-                } h-full min-h-[300px] lg:min-h-[360px]`}
+                className={`${selectedCategory === "All" ? item.aspectSpan : "lg:col-span-6"
+                  } h-full min-h-[300px] lg:min-h-[360px]`}
               >
                 <div
                   onClick={() => {
                     if (item.type === "video" && !item.videoEmbedUrl && item.externalUrl) {
                       window.open(item.externalUrl, "_blank", "noopener,noreferrer");
                     } else {
-                      setActiveMedia(item);
+                      handleOpenMedia(item);
                     }
                   }}
                   className="group relative h-full w-full rounded-3xl overflow-hidden bg-slate-900 border border-stone-200/80 hover:border-amber-400/50 shadow-md hover:shadow-2xl hover:shadow-amber-950/20 transition-all duration-500 cursor-pointer flex flex-col justify-end"
@@ -267,14 +316,21 @@ export default function GallerySection() {
                     </div>
                   )}
 
-                  {/* Top Badge: Category / Duration */}
+                  {/* Top Badge: Category / Duration / Photo Count */}
                   <div className="absolute top-5 left-5 right-5 flex items-center justify-between z-10">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold uppercase tracking-wider shadow-sm">
-                      {item.type === "video" && (
-                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold uppercase tracking-wider shadow-sm">
+                        {item.type === "video" && (
+                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                        )}
+                        <span>{item.tag}</span>
+                      </span>
+                      {Array.isArray(item.images) && item.images.length > 1 && (
+                        <span className="px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold uppercase shadow-sm">
+                          📷 {item.images.length} Photos
+                        </span>
                       )}
-                      <span>{item.tag}</span>
-                    </span>
+                    </div>
 
                     {item.duration && (
                       <span className="px-2.5 py-1 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-400/30 text-amber-200 text-[11px] font-medium tracking-wide">
@@ -320,11 +376,11 @@ export default function GallerySection() {
           >
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 bg-black/40">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">
+              <div className="flex items-center gap-2.5">
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/30 text-xs font-semibold text-amber-300 uppercase tracking-widest">
                   {activeMedia.tag}
                 </span>
-                <span className="text-slate-500">•</span>
+
                 <span className="font-serif text-base sm:text-lg text-white font-normal truncate max-w-xs sm:max-w-md">
                   {activeMedia.title}
                 </span>
@@ -340,7 +396,7 @@ export default function GallerySection() {
             </div>
 
             {/* Modal Media Body */}
-            <div className="relative w-full aspect-video bg-black flex items-center justify-center">
+            <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
               {activeMedia.type === "video" && activeMedia.videoEmbedUrl ? (
                 <iframe
                   className="w-full h-full"
@@ -351,15 +407,62 @@ export default function GallerySection() {
                 />
               ) : (
                 <Image
-                  src={activeMedia.src}
+                  src={activePhotos[activePhotoIndex] || activeMedia.src}
                   alt={activeMedia.title}
                   fill
                   unoptimized
-                  className="object-contain"
+                  className="object-contain p-2 transition-opacity duration-300"
                   priority
                 />
               )}
+
+              {/* Slider Prev / Next Buttons */}
+              {activePhotos.length > 1 && activeMedia.type !== "video" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevPhoto}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center text-xl transition cursor-pointer shadow-xl z-20"
+                    title="Previous Photo (←)"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextPhoto}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/65 hover:bg-black/90 text-white border border-white/20 flex items-center justify-center text-xl transition cursor-pointer shadow-xl z-20"
+                    title="Next Photo (→)"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* Multi-Photo Selector if multiple photos in set */}
+            {activePhotos.length > 1 && (
+              <div className="px-4 py-2.5 bg-[#060e1a] border-t border-white/10 flex items-center justify-between gap-3 shrink-0">
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+                  {activePhotos.map((pUrl, pIdx) => {
+                    const isSelected = pIdx === activePhotoIndex;
+                    return (
+                      <button
+                        key={pUrl + pIdx}
+                        type="button"
+                        onClick={() => setActivePhotoIndex(pIdx)}
+                        className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition cursor-pointer ${isSelected ? "border-amber-400 scale-105 shadow-md shadow-amber-400/30" : "border-white/20 opacity-60 hover:opacity-100"
+                          }`}
+                      >
+                        <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized className="object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+                <span className="text-[11px] font-mono text-amber-300 whitespace-nowrap hidden sm:inline">
+                  {activePhotoIndex + 1} / {activePhotos.length}
+                </span>
+              </div>
+            )}
 
             {/* Modal Footer Description */}
             <div className="p-5 sm:p-6 bg-[#091322] border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

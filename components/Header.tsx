@@ -18,6 +18,8 @@ export default function Header() {
       setActiveTab("about");
     } else if (pathname === "/events") {
       setActiveTab("events");
+    } else if (pathname === "/media" || pathname === "/media-archive") {
+      setActiveTab("media");
     } else if (pathname === "/") {
       if (!window.location.hash) {
         setActiveTab("home");

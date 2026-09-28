@@ -54,25 +54,29 @@ export async function GET(request: NextRequest) {
       .limit(Math.min(limit, 200))
       .lean();
 
+    const mappedItems = items.map((item) => ({
+      id: item._id.toString(),
+      _id: item._id.toString(),
+      title: item.title,
+      description: item.description || "",
+      mediaType: item.mediaType,
+      category: item.category,
+      imageUrl: item.imageUrl,
+      images: Array.isArray(item.images) && item.images.length > 0 ? item.images : [item.imageUrl].filter(Boolean),
+      externalUrl: item.externalUrl || null,
+      youtubeVideoId: item.youtubeVideoId || null,
+      eventDate: item.eventDate || "",
+      isFeatured: Boolean(item.isFeatured),
+      isPublished: Boolean(item.isPublished),
+      displayOrder: item.displayOrder || 0,
+      createdAt: item.createdAt,
+    }));
+
     return NextResponse.json({
       success: true,
-      count: items.length,
-      items: items.map((item) => ({
-        id: item._id.toString(),
-        title: item.title,
-        description: item.description || "",
-        mediaType: item.mediaType,
-        category: item.category,
-        subcategory: item.subcategory || "",
-        imageUrl: item.imageUrl,
-        externalUrl: item.externalUrl || null,
-        youtubeVideoId: item.youtubeVideoId || null,
-        eventDate: item.eventDate || "",
-        isFeatured: Boolean(item.isFeatured),
-        isPublished: Boolean(item.isPublished),
-        displayOrder: item.displayOrder || 0,
-        createdAt: item.createdAt,
-      })),
+      count: mappedItems.length,
+      items: mappedItems,
+      data: mappedItems,
     });
   } catch (error: any) {
     console.error("[Public Media GET Error]:", error);

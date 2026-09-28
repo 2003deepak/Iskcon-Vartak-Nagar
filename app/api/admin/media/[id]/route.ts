@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import MediaItem, { MediaType, MediaCategory } from "@/models/MediaItem";
-import AuditLog from "@/models/AuditLog";
 import { getAuthenticatedAdmin } from "@/lib/auth";
 import {
   extractYouTubeVideoId,
@@ -88,8 +87,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       description,
       mediaType,
       category,
-      subcategory,
       imageUrl,
+      images = [],
       externalUrl,
       eventDate,
       isFeatured,
@@ -105,21 +104,27 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     }
 
     let finalImageUrl = (imageUrl || "").trim();
+    let sanitizedImages: string[] = Array.isArray(images)
+      ? images.map((u: any) => String(u).trim()).filter((u: string) => u.length > 0)
+      : [];
+
+    if (!finalImageUrl && sanitizedImages.length > 0) {
+      finalImageUrl = sanitizedImages[0];
+    } else if (finalImageUrl && !sanitizedImages.includes(finalImageUrl)) {
+      sanitizedImages.unshift(finalImageUrl);
+    }
+
+    sanitizedImages = sanitizedImages.slice(0, 10);
+
     let finalExternalUrl = (externalUrl || "").trim();
     let youtubeVideoId: string | undefined = undefined;
 
     const upperMediaType = (mediaType || "IMAGE").toUpperCase() as MediaType;
 
     if (upperMediaType === "IMAGE") {
-      if (!finalImageUrl) {
+      if (!finalImageUrl && sanitizedImages.length === 0) {
         return NextResponse.json(
-          { success: false, error: "Image URL is required for Image type." },
-          { status: 400 }
-        );
-      }
-      if (!isValidHttpUrl(finalImageUrl)) {
-        return NextResponse.json(
-          { success: false, error: "Invalid image URL format." },
+          { success: false, error: "At least one image is required for Image type." },
           { status: 400 }
         );
       }
@@ -141,6 +146,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       if (!finalImageUrl) {
         finalImageUrl = getYouTubeThumbnail(extractedId, "maxres");
       }
+      if (sanitizedImages.length === 0 && finalImageUrl) {
+        sanitizedImages = [finalImageUrl];
+      }
     } else if (upperMediaType === "INSTAGRAM_REEL") {
       if (!finalExternalUrl) {
         return NextResponse.json(
@@ -157,6 +165,9 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       if (!finalImageUrl) {
         finalImageUrl = "/hero_bg.jpeg";
       }
+      if (sanitizedImages.length === 0 && finalImageUrl) {
+        sanitizedImages = [finalImageUrl];
+      }
     }
 
     await connectToDatabase();
@@ -166,8 +177,8 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       description: (description || "").trim(),
       mediaType: upperMediaType,
       category: (category || "Darshan") as MediaCategory,
-      subcategory: (subcategory || "").trim(),
       imageUrl: finalImageUrl,
+      images: sanitizedImages,
       externalUrl: finalExternalUrl || undefined,
       youtubeVideoId,
       eventDate: eventDate ? eventDate.trim() : undefined,
@@ -191,32 +202,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
         { success: false, error: "Media item not found." },
         { status: 404 }
       );
-    }
-
-    // Audit log
-    try {
-      await AuditLog.create({
-        action: "UPDATE_MEDIA",
-        entityType: "Media",
-        entityId: updated._id?.toString(),
-        entityTitle: updated.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          mediaType: updated.mediaType,
-          category: updated.category,
-          isPublished: updated.isPublished,
-          isFeatured: updated.isFeatured,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Warning]:", auditErr);
     }
 
     return NextResponse.json({
@@ -262,30 +247,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         { success: false, error: "Media item not found." },
         { status: 404 }
       );
-    }
-
-    // Audit log
-    try {
-      await AuditLog.create({
-        action: "DELETE_MEDIA",
-        entityType: "Media",
-        entityId: id,
-        entityTitle: deleted.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          mediaType: deleted.mediaType,
-          category: deleted.category,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Warning]:", auditErr);
     }
 
     return NextResponse.json({

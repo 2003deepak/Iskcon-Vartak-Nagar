@@ -4,21 +4,18 @@ export type MediaType = "IMAGE" | "YOUTUBE" | "INSTAGRAM_REEL";
 
 export type MediaCategory =
   | "Darshan"
-  | "Gaur Nitai"
-  | "Deities"
   | "Festival"
   | "Kirtan"
   | "Community Seva"
-  | "Spiritual"
-  | "Other";
+  | "Yatra"
 
 export interface IMediaItem extends Document {
   title: string;
   description?: string;
   mediaType: MediaType;
   category: MediaCategory;
-  subcategory?: string;
-  imageUrl: string;
+  imageUrl: string; // Primary / cover photo
+  images?: string[]; // Up to 10 photos for the day/memory set
   externalUrl?: string;
   youtubeVideoId?: string;
   eventDate?: string; // Formatted YYYY-MM-DD
@@ -63,11 +60,12 @@ const MediaItemSchema: Schema = new Schema(
       type: String,
       enum: [
         "Darshan",
-        "Gaur Nitai",
-        "Deities",
         "Festival",
         "Kirtan",
         "Community Seva",
+        "Yatra",
+        "Gaur Nitai",
+        "Deities",
         "Spiritual",
         "Other",
       ],
@@ -84,6 +82,10 @@ const MediaItemSchema: Schema = new Schema(
       type: String,
       required: [true, "Image URL is required"],
       trim: true,
+    },
+    images: {
+      type: [String],
+      default: [],
     },
     externalUrl: {
       type: String,

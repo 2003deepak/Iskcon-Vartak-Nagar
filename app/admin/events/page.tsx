@@ -416,10 +416,10 @@ export default function AdminEventsPage() {
 
       // When the event form is submitted: upload the image to ImageKit if a local file was selected
       if (selectedBannerFile) {
-        setSavingStatusText("Uploading banner image to ImageKit...");
+        setSavingStatusText("Uploading banner image");
         const formData = new FormData();
         formData.append("file", selectedBannerFile);
-        formData.append("folder", "Events");
+        formData.append("folder", "Events Banner");
 
         const uploadRes = await adminFetch("/api/admin/upload", {
           method: "POST",

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import ProgramEvent from "@/models/ProgramEvent";
-import AuditLog from "@/models/AuditLog";
 import { getAuthenticatedAdmin } from "@/lib/auth";
 import { generateSlug } from "@/lib/slug-utils";
 
@@ -238,32 +237,6 @@ export async function POST(request: NextRequest) {
         email: adminContext.user.email,
       },
     });
-
-    // 4. Record Audit Log
-    try {
-      await AuditLog.create({
-        action: "CREATE_EVENT",
-        entityType: "Event",
-        entityId: newEvent._id?.toString(),
-        entityTitle: newEvent.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          slug: newEvent.slug,
-          category: newEvent.category,
-          status: newEvent.status,
-          isFeatured: newEvent.isFeatured,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Error]:", auditErr);
-    }
 
     return NextResponse.json({
       success: true,

@@ -132,7 +132,7 @@ export function extractBasicDimensions(
 export async function storeEventImage(
   buffer: Buffer,
   originalFilename: string,
-  folder: string = "Events"
+  folder: string = "Events Banner"
 ): Promise<StoredImageResult> {
   const validation = validateImageBuffer(buffer);
   if (!validation.isValid) {
@@ -155,10 +155,11 @@ export async function storeEventImage(
 
   if (imageKitPrivateKey) {
     try {
+      const cleanFolder = folder.startsWith("/") ? folder : `/${folder}`;
       const formData = new FormData();
       formData.append("file", buffer.toString("base64"));
       formData.append("fileName", uniqueFilename);
-      formData.append("folder", `/${folder}`);
+      formData.append("folder", cleanFolder);
       formData.append("useUniqueFileName", "true");
 
       const authHeader = `Basic ${Buffer.from(imageKitPrivateKey + ":").toString("base64")}`;
@@ -195,8 +196,9 @@ export async function storeEventImage(
     }
   }
 
-  // Local Storage Fallback: Save in /public/uploads/events
-  const uploadsDir = path.join(process.cwd(), "public", "uploads", "events");
+  // Local Storage Fallback
+  const safeSubDir = folder.replace(/[^a-zA-Z0-9_-]/g, "_").toLowerCase();
+  const uploadsDir = path.join(process.cwd(), "public", "uploads", safeSubDir);
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
@@ -204,7 +206,7 @@ export async function storeEventImage(
   const filePath = path.join(uploadsDir, uniqueFilename);
   fs.writeFileSync(filePath, buffer);
 
-  const localUrl = `/uploads/events/${uniqueFilename}`;
+  const localUrl = `/uploads/${safeSubDir}/${uniqueFilename}`;
 
   return {
     url: localUrl,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import ProgramEvent from "@/models/ProgramEvent";
-import AuditLog from "@/models/AuditLog";
 import { getAuthenticatedAdmin } from "@/lib/auth";
 import { generateSlug } from "@/lib/slug-utils";
 import mongoose from "mongoose";
@@ -207,39 +206,6 @@ export async function PUT(request: NextRequest, context: RouteContext) {
       );
     }
 
-    // Record Audit Log
-    try {
-      const action =
-        status === "published"
-          ? "PUBLISH_EVENT"
-          : status === "archived"
-          ? "UNPUBLISH_EVENT"
-          : "UPDATE_EVENT";
-
-      await AuditLog.create({
-        action,
-        entityType: "Event",
-        entityId: updatedEvent._id?.toString(),
-        entityTitle: updatedEvent.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          slug: updatedEvent.slug,
-          category: updatedEvent.category,
-          status: updatedEvent.status,
-          isFeatured: updatedEvent.isFeatured,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Error]:", auditErr);
-    }
-
     return NextResponse.json({
       success: true,
       message: "Event updated successfully.",
@@ -283,30 +249,6 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         { success: false, error: "Event not found." },
         { status: 404 }
       );
-    }
-
-    // Record Audit Log
-    try {
-      await AuditLog.create({
-        action: "DELETE_EVENT",
-        entityType: "Event",
-        entityId: id,
-        entityTitle: deletedEvent.title,
-        performedBy: {
-          id: adminContext.user._id?.toString(),
-          name: adminContext.user.name,
-          email: adminContext.user.email,
-          role: adminContext.user.role,
-        },
-        details: {
-          slug: deletedEvent.slug,
-          category: deletedEvent.category,
-        },
-        ipAddress: request.headers.get("x-forwarded-for") || undefined,
-        userAgent: request.headers.get("user-agent") || undefined,
-      });
-    } catch (auditErr) {
-      console.warn("[Audit Log Error]:", auditErr);
     }
 
     return NextResponse.json({

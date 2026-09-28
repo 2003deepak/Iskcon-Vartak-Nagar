@@ -22,8 +22,8 @@ export interface AdminMediaItem {
   description?: string;
   mediaType: MediaType;
   category: MediaCategory;
-  subcategory?: string;
   imageUrl: string;
+  images?: string[];
   externalUrl?: string;
   youtubeVideoId?: string;
   eventDate?: string;
@@ -32,6 +32,13 @@ export interface AdminMediaItem {
   displayOrder: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface StagedPhoto {
+  id: string;
+  previewUrl: string;
+  file?: File;
+  remoteUrl?: string;
 }
 
 export default function AdminMediaPage() {
@@ -54,13 +61,22 @@ export default function AdminMediaPage() {
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedFeatured, setSelectedFeatured] = useState<string>("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [sortBy, setSortBy] = useState<string>("displayOrder");
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+
+  // Debounce search query changes to prevent API spamming on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Modal State
   const [isFormModalOpen, setIsFormModalOpen] = useState<boolean>(false);
@@ -73,8 +89,9 @@ export default function AdminMediaPage() {
   const [formTitle, setFormTitle] = useState<string>("");
   const [formDescription, setFormDescription] = useState<string>("");
   const [formCategory, setFormCategory] = useState<MediaCategory>("Darshan");
-  const [formSubcategory, setFormSubcategory] = useState<string>("");
   const [formImageUrl, setFormImageUrl] = useState<string>("");
+  const [formImages, setFormImages] = useState<StagedPhoto[]>([]);
+  const [manualUrlInput, setManualUrlInput] = useState<string>("");
   const [formExternalUrl, setFormExternalUrl] = useState<string>("");
   const [formEventDate, setFormEventDate] = useState<string>("");
   const [formDisplayOrder, setFormDisplayOrder] = useState<number>(0);
@@ -94,6 +111,7 @@ export default function AdminMediaPage() {
 
   // Lightbox Preview Modal State
   const [previewItem, setPreviewItem] = useState<AdminMediaItem | null>(null);
+  const [previewPhotoIndex, setPreviewPhotoIndex] = useState<number>(0);
 
   // Delete Modal State
   const [deleteTarget, setDeleteTarget] = useState<AdminMediaItem | null>(null);
@@ -113,7 +131,7 @@ export default function AdminMediaPage() {
     setErrorMsg(null);
     try {
       const params = new URLSearchParams();
-      if (searchQuery.trim()) params.append("search", searchQuery.trim());
+      if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
       if (selectedType !== "all") params.append("type", selectedType);
       if (selectedCategory !== "all") params.append("category", selectedCategory);
       if (selectedStatus !== "all") params.append("status", selectedStatus);
@@ -135,7 +153,7 @@ export default function AdminMediaPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, selectedType, selectedCategory, selectedStatus, selectedFeatured, selectedDate, sortBy]);
+  }, [debouncedSearch, selectedType, selectedCategory, selectedStatus, selectedFeatured, selectedDate, sortBy]);
 
   useEffect(() => {
     fetchMedia();
@@ -190,8 +208,26 @@ export default function AdminMediaPage() {
     }
   };
 
+  // Close Modal and cleanup object URLs
+  const handleCloseModal = () => {
+    formImages.forEach((img) => {
+      if (img.file && img.previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+    });
+    setFormImages([]);
+    setIsFormModalOpen(false);
+  };
+
   // Open Create Modal
   const handleOpenCreateModal = (initialCategory?: MediaCategory) => {
+    // Revoke previous blob URLs
+    formImages.forEach((img) => {
+      if (img.file && img.previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+    });
+
     setEditingItemId(null);
     setFormErrors({});
     setFileUploadError(null);
@@ -201,8 +237,9 @@ export default function AdminMediaPage() {
     setFormTitle("");
     setFormDescription("");
     setFormCategory(initialCategory || "Darshan");
-    setFormSubcategory("Gaura Nitai");
     setFormImageUrl("");
+    setFormImages([]);
+    setManualUrlInput("");
     setFormExternalUrl("");
     setFormEventDate(new Date().toISOString().slice(0, 10));
     setFormDisplayOrder(mediaList.length + 1);
@@ -217,25 +254,43 @@ export default function AdminMediaPage() {
 
   // Open Edit Modal
   const handleOpenEditModal = (item: AdminMediaItem) => {
+    // Revoke previous blob URLs
+    formImages.forEach((img) => {
+      if (img.file && img.previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(img.previewUrl);
+      }
+    });
+
     setEditingItemId(item._id);
     setFormErrors({});
     setFileUploadError(null);
     setSelectedFile(null);
 
+    const initialUrls = Array.isArray(item.images) && item.images.length > 0
+      ? item.images
+      : [item.imageUrl].filter(Boolean);
+
+    const staged: StagedPhoto[] = initialUrls.map((url, i) => ({
+      id: `existing-${item._id}-${i}-${url}`,
+      previewUrl: url,
+      remoteUrl: url,
+    }));
+
     setFormMediaType(item.mediaType);
     setFormTitle(item.title);
     setFormDescription(item.description || "");
     setFormCategory(item.category);
-    setFormSubcategory(item.subcategory || "");
-    setFormImageUrl(item.imageUrl || "");
+    setFormImageUrl(item.imageUrl || (initialUrls[0] || ""));
+    setFormImages(staged);
+    setManualUrlInput("");
     setFormExternalUrl(item.externalUrl || "");
     setFormEventDate(item.eventDate || new Date().toISOString().slice(0, 10));
     setFormDisplayOrder(item.displayOrder ?? 0);
     setFormIsFeatured(item.isFeatured);
     setFormIsPublished(item.isPublished);
 
-    if (item.imageUrl) {
-      verifyImage(item.imageUrl);
+    if (item.imageUrl || initialUrls[0]) {
+      verifyImage(item.imageUrl || initialUrls[0]);
     } else {
       setImageVerificationStatus("idle");
       setImageDimensions(null);
@@ -244,36 +299,77 @@ export default function AdminMediaPage() {
     setIsFormModalOpen(true);
   };
 
-  // Handle Local File Upload to ImageKit
-  const handleFileUpload = async (file: File) => {
-    setIsUploadingFile(true);
-    setFileUploadError(null);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "Media");
+  // Handle Multi-file Selection (Local Staging Only - Uploads to ImageKit only when clicking Publish)
+  const handleMultipleFilesUpload = (files: FileList | File[]) => {
+    const currentCount = formImages.length;
+    const availableSlots = 10 - currentCount;
+    if (availableSlots <= 0) {
+      showToast("Maximum of 10 photos already reached.");
+      return;
+    }
 
-      const res = await adminFetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const fileArray = Array.from(files).slice(0, availableSlots);
+    const newPhotos: StagedPhoto[] = fileArray.map((file) => ({
+      id: `local-${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 7)}`,
+      previewUrl: URL.createObjectURL(file),
+      file,
+    }));
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setFormImageUrl(data.image.url);
-        verifyImage(data.image.url);
-        showToast(`Image "${file.name}" uploaded to ImageKit successfully!`);
-      } else {
-        setFileUploadError(data.error || "Failed to upload image.");
+    const updatedList = [...formImages, ...newPhotos].slice(0, 10);
+    setFormImages(updatedList);
+    if (!formImageUrl && updatedList.length > 0) {
+      setFormImageUrl(updatedList[0].previewUrl);
+    }
+    showToast(`Added ${newPhotos.length} photo(s) to staging queue.`);
+  };
+
+  const handleAddManualUrl = () => {
+    if (!manualUrlInput.trim()) return;
+    if (formImages.length >= 10) {
+      showToast("Maximum 10 photos allowed.");
+      return;
+    }
+    const url = manualUrlInput.trim();
+    if (!formImages.some((p) => p.remoteUrl === url || p.previewUrl === url)) {
+      const newPhoto: StagedPhoto = {
+        id: `url-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        previewUrl: url,
+        remoteUrl: url,
+      };
+      const updated = [...formImages, newPhoto].slice(0, 10);
+      setFormImages(updated);
+      if (!formImageUrl) {
+        setFormImageUrl(url);
       }
-    } catch (err: any) {
-      setFileUploadError(err?.message || "An upload error occurred.");
-    } finally {
-      setIsUploadingFile(false);
+    }
+    setManualUrlInput("");
+  };
+
+  const handleRemoveImage = (index: number) => {
+    const target = formImages[index];
+    if (target?.file && target.previewUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(target.previewUrl);
+    }
+    const updated = formImages.filter((_, i) => i !== index);
+    setFormImages(updated);
+    if (updated.length > 0) {
+      setFormImageUrl(updated[0].previewUrl);
+    } else {
+      setFormImageUrl("");
+      setImageVerificationStatus("idle");
     }
   };
 
-  // Save Media (Create or Update)
+  const handleSetCoverImage = (index: number) => {
+    if (index < 0 || index >= formImages.length) return;
+    const coverItem = formImages[index];
+    const reordered = [coverItem, ...formImages.filter((_, i) => i !== index)];
+    setFormImages(reordered);
+    setFormImageUrl(coverItem.previewUrl);
+    showToast("Selected as primary cover photo.");
+  };
+
+  // Save Media (Create or Update) - Uploads staged files to storage on submit
   const handleSaveMedia = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
@@ -285,10 +381,8 @@ export default function AdminMediaPage() {
     }
 
     if (formMediaType === "IMAGE") {
-      if (!formImageUrl.trim()) {
-        errors.imageUrl = "Image URL is required. Paste a URL or upload a file.";
-      } else if (imageVerificationStatus === "invalid") {
-        errors.imageUrl = "Image URL is invalid or inaccessible. Please verify the URL.";
+      if (formImages.length === 0) {
+        errors.imageUrl = "At least one photo is required. Select photos or enter URL.";
       }
     } else if (formMediaType === "YOUTUBE") {
       if (!formExternalUrl.trim()) {
@@ -312,17 +406,63 @@ export default function AdminMediaPage() {
     setIsSaving(true);
 
     try {
-      let finalImageUrl = formImageUrl.trim();
+      let finalImagesList: string[] = [];
+      let finalCoverUrl = "";
       let extractedVideoId: string | undefined = undefined;
 
-      if (formMediaType === "YOUTUBE") {
+      if (formMediaType === "IMAGE") {
+        // Upload staged local files to storage only now
+        const localFilesToUpload = formImages.filter((p) => p.file);
+
+        if (localFilesToUpload.length > 0) {
+          const uploadFormData = new FormData();
+          localFilesToUpload.forEach((p) => {
+            if (p.file) uploadFormData.append("files", p.file);
+          });
+          uploadFormData.append("folder", "Media");
+
+          const uploadRes = await adminFetch("/api/admin/upload", {
+            method: "POST",
+            body: uploadFormData,
+          });
+
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok || !uploadData.success) {
+            throw new Error(uploadData.error || "Failed to upload staged photos to storage.");
+          }
+
+          const uploadedArray: any[] = Array.isArray(uploadData.images)
+            ? uploadData.images
+            : uploadData.image
+            ? [uploadData.image]
+            : [];
+          let uploadIdx = 0;
+
+          finalImagesList = formImages
+            .map((p) => {
+              if (p.file) {
+                const uploadedItem = uploadedArray[uploadIdx++];
+                const url = typeof uploadedItem === "string" ? uploadedItem : uploadedItem?.url || "";
+                return url || p.remoteUrl || "";
+              }
+              return p.remoteUrl || p.previewUrl;
+            })
+            .filter((url) => url && !url.startsWith("blob:"));
+        } else {
+          finalImagesList = formImages
+            .map((p) => p.remoteUrl || p.previewUrl)
+            .filter((url) => url && !url.startsWith("blob:"));
+        }
+
+        finalCoverUrl = finalImagesList[0] || "";
+      } else if (formMediaType === "YOUTUBE") {
         const vidId = extractYouTubeVideoId(formExternalUrl);
         if (vidId) {
           extractedVideoId = vidId;
-          if (!finalImageUrl) finalImageUrl = getYouTubeThumbnail(vidId, "maxres");
+          finalCoverUrl = getYouTubeThumbnail(vidId, "maxres");
         }
-      } else if (formMediaType === "INSTAGRAM_REEL" && !finalImageUrl) {
-        finalImageUrl = "/hero_bg.jpeg";
+      } else if (formMediaType === "INSTAGRAM_REEL") {
+        finalCoverUrl = "/hero_bg.jpeg";
       }
 
       const payload = {
@@ -330,8 +470,8 @@ export default function AdminMediaPage() {
         description: formDescription.trim(),
         mediaType: formMediaType,
         category: formCategory,
-        subcategory: formSubcategory.trim(),
-        imageUrl: finalImageUrl,
+        imageUrl: finalCoverUrl,
+        images: finalImagesList.slice(0, 10),
         externalUrl: formExternalUrl.trim() || undefined,
         youtubeVideoId: extractedVideoId,
         eventDate: formEventDate.trim() || new Date().toISOString().slice(0, 10),
@@ -352,11 +492,18 @@ export default function AdminMediaPage() {
       const data = await res.json();
 
       if (res.ok && data.success) {
+        // Clean up blob URLs
+        formImages.forEach((img) => {
+          if (img.file && img.previewUrl.startsWith("blob:")) {
+            URL.revokeObjectURL(img.previewUrl);
+          }
+        });
+
         setIsFormModalOpen(false);
         showToast(
           editingItemId
             ? `Successfully updated "${formTitle}".`
-            : `✓ Media published successfully! Visible on website.`
+            : `✓ Media published successfully with ${finalImagesList.length || 1} photo(s)!`
         );
         fetchMedia();
       } else {
@@ -459,7 +606,7 @@ export default function AdminMediaPage() {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 max-w-2xl leading-relaxed">
-            Manage deity darshan images, YouTube kirtans, and Instagram reels. Paste any image URL with instant preview or upload to ImageKit.
+            Manage deity darshan images, YouTube kirtans, and Instagram reels. Paste any image URL with instant preview or upload daily darshan.
           </p>
         </div>
 
@@ -552,8 +699,8 @@ export default function AdminMediaPage() {
                 key={t.id}
                 onClick={() => setSelectedType(t.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-semibold transition cursor-pointer whitespace-nowrap ${selectedType === t.id
-                    ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
-                    : "bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
+                  ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 font-bold"
+                  : "bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800"
                   }`}
               >
                 <span>{t.icon}</span>
@@ -583,84 +730,7 @@ export default function AdminMediaPage() {
           </div>
         </div>
 
-        {/* Bottom: Secondary Filters (Category, Status, Featured, Date, View Switcher) */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800/80 text-xs">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Category Filter */}
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
-            >
-              <option value="all">📁 All Categories</option>
-              {MEDIA_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.icon} {c.label}
-                </option>
-              ))}
-            </select>
 
-            {/* Status Filter */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
-            >
-              <option value="all">⚡ Status: All</option>
-              <option value="published">🟢 Published</option>
-              <option value="draft">🟡 Draft</option>
-            </select>
-
-            {/* Featured Filter */}
-            <select
-              value={selectedFeatured}
-              onChange={(e) => setSelectedFeatured(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
-            >
-              <option value="all">★ Featured: All</option>
-              <option value="featured">★ Featured Only</option>
-            </select>
-
-            {/* Event Date Filter */}
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              title="Filter by Event Date"
-              className="bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500 cursor-pointer"
-            />
-            {selectedDate && (
-              <button
-                onClick={() => setSelectedDate("")}
-                className="text-slate-400 hover:text-white text-[11px] underline cursor-pointer"
-              >
-                Clear Date
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* View Mode Toggle */}
-            <div className="inline-flex items-center bg-slate-950 p-1 rounded-xl border border-slate-800">
-              <button
-                onClick={() => setViewMode("cards")}
-                className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${viewMode === "cards" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white"
-                  }`}
-                title="Card Grid View"
-              >
-                ▦ Cards
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded-lg text-xs transition cursor-pointer ${viewMode === "table" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white"
-                  }`}
-                title="Table View"
-              >
-                ☰ Table
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Error Banner */}
@@ -696,7 +766,7 @@ export default function AdminMediaPage() {
             + Add First Media
           </button>
         </div>
-      ) : viewMode === "cards" ? (
+      ) : (
         /* VISUAL CARD GRID VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {mediaList.map((item) => {
@@ -748,6 +818,12 @@ export default function AdminMediaPage() {
                           ★ Featured
                         </span>
                       )}
+
+                      {Array.isArray(item.images) && item.images.length > 1 && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500/90 text-slate-950 shadow-md">
+                          📷 {item.images.length} Photos
+                        </span>
+                      )}
                     </div>
 
                     {/* Status Pill on top right */}
@@ -759,8 +835,8 @@ export default function AdminMediaPage() {
                           handleTogglePublished(item);
                         }}
                         className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider transition cursor-pointer ${isLive
-                            ? "bg-emerald-500/90 text-white hover:bg-emerald-600"
-                            : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                          ? "bg-emerald-500/90 text-white hover:bg-emerald-600"
+                          : "bg-slate-800 text-slate-300 hover:bg-slate-700"
                           }`}
                         title="Click to toggle Published / Draft"
                       >
@@ -793,10 +869,7 @@ export default function AdminMediaPage() {
                     <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                       {item.description || "No description provided."}
                     </p>
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 font-mono">
-                      <span>📅 {item.eventDate || "Recent"}</span>
-                      {item.subcategory && <span className="truncate max-w-[120px]">🏷️ {item.subcategory}</span>}
-                    </div>
+
                   </div>
                 </div>
 
@@ -817,7 +890,10 @@ export default function AdminMediaPage() {
 
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => setPreviewItem(item)}
+                      onClick={() => {
+                        setPreviewItem(item);
+                        setPreviewPhotoIndex(0);
+                      }}
                       className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition cursor-pointer text-xs"
                       title="Preview Media"
                     >
@@ -843,119 +919,6 @@ export default function AdminMediaPage() {
             );
           })}
         </div>
-      ) : (
-        /* TABLE VIEW */
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                  <th className="py-3.5 px-4">Media</th>
-                  <th className="py-3.5 px-4">Type</th>
-                  <th className="py-3.5 px-4">Category</th>
-                  <th className="py-3.5 px-4">Event Date</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4">Order</th>
-                  <th className="py-3.5 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/70">
-                {mediaList.map((item) => (
-                  <tr key={item._id} className="hover:bg-slate-800/40 transition group">
-                    {/* Thumbnail & Title */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-slate-950 border border-slate-800">
-                          <Image
-                            src={item.imageUrl}
-                            alt={item.title}
-                            fill
-                            sizes="48px"
-                            className="object-cover"
-                            unoptimized
-                          />
-                        </div>
-                        <div>
-                          <div className="font-semibold text-slate-100 group-hover:text-amber-300 transition line-clamp-1">
-                            {item.title}
-                          </div>
-                          <div className="text-[10px] text-slate-500 line-clamp-1">
-                            {item.description || item.subcategory || "No details"}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Media Type */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-300">
-                        <span>{item.mediaType === "IMAGE" ? "🖼️" : item.mediaType === "YOUTUBE" ? "▶️" : "📱"}</span>
-                        <span>{item.mediaType}</span>
-                      </span>
-                    </td>
-
-                    {/* Category */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                        <span>{item.category}</span>
-                      </span>
-                    </td>
-
-                    {/* Date */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-slate-300">
-                      {item.eventDate || "-"}
-                    </td>
-
-                    {/* Status */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleTogglePublished(item)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition cursor-pointer ${item.isPublished
-                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30"
-                            : "bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700"
-                          }`}
-                      >
-                        {item.isPublished ? "● Live" : "○ Draft"}
-                      </button>
-                    </td>
-
-                    {/* Order */}
-                    <td className="py-3.5 px-4 whitespace-nowrap font-mono text-slate-400">
-                      #{item.displayOrder}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => setPreviewItem(item)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
-                          title="Preview"
-                        >
-                          👁️
-                        </button>
-                        <button
-                          onClick={() => handleOpenEditModal(item)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 transition cursor-pointer"
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => setDeleteTarget(item)}
-                          className="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition cursor-pointer"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
 
       {/* CREATE / EDIT MEDIA MODAL */}
@@ -973,7 +936,7 @@ export default function AdminMediaPage() {
                 </p>
               </div>
               <button
-                onClick={() => setIsFormModalOpen(false)}
+                onClick={handleCloseModal}
                 className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm font-bold transition cursor-pointer"
               >
                 ✕
@@ -1006,8 +969,8 @@ export default function AdminMediaPage() {
                         }
                       }}
                       className={`p-2.5 rounded-xl border text-center transition cursor-pointer flex flex-col items-center gap-1 ${formMediaType === t.id
-                          ? "bg-amber-500/15 border-amber-500 text-amber-300 font-bold shadow-md shadow-amber-500/10"
-                          : "bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
+                        ? "bg-amber-500/15 border-amber-500 text-amber-300 font-bold shadow-md shadow-amber-500/10"
+                        : "bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-200"
                         }`}
                     >
                       <span className="text-base">{t.icon}</span>
@@ -1017,142 +980,150 @@ export default function AdminMediaPage() {
                 </div>
               </div>
 
-              {/* 2. DYNAMIC URL ENTRY ACCORDING TO TYPE */}
+              {/* 2. DYNAMIC PHOTO ALBUM UPLOAD (UP TO 10 PHOTOS) */}
               {formMediaType === "IMAGE" && (
-                <div className="space-y-3 p-4 bg-slate-950/70 border border-slate-800 rounded-2xl">
+                <div className="space-y-3.5 p-4 bg-slate-950/70 border border-slate-800 rounded-2xl">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-semibold text-slate-200">
-                      Image URL <span className="text-amber-400">*</span>
-                    </label>
-                    {imageVerificationStatus === "verifying" && (
-                      <span className="text-amber-400 text-[10px] flex items-center gap-1">
-                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                        Verifying image link...
-                      </span>
-                    )}
-                    {imageVerificationStatus === "valid" && (
-                      <span className="text-emerald-400 text-[10px] font-semibold flex items-center gap-1">
-                        ✓ Image loaded successfully
-                        {imageDimensions?.width ? ` (${imageDimensions.width}×${imageDimensions.height}px)` : ""}
-                      </span>
-                    )}
-                    {imageVerificationStatus === "invalid" && (
-                      <span className="text-rose-400 text-[10px] font-semibold">
-                        ⚠ Unable to load image
-                      </span>
-                    )}
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-200">
+                        Photos in Album / Set <span className="text-amber-400">*</span>
+                      </label>
+                      <p className="text-[11px] text-slate-400">
+                        Select up to 10 photos. Photos will only be uploaded to ImageKit when you click &quot;Publish to Website&quot;.
+                      </p>
+                    </div>
+
                   </div>
 
-                  <input
-                    type="url"
-                    value={formImageUrl}
-                    onChange={(e) => handleImageUrlChange(e.target.value)}
-                    placeholder="https://example.com/daily-darshan.jpg or ImageKit URL"
-                    className={`w-full bg-slate-900 border rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition ${imageVerificationStatus === "invalid"
-                        ? "border-rose-500 focus:border-rose-500"
-                        : imageVerificationStatus === "valid"
-                          ? "border-emerald-500/80 focus:border-emerald-500"
-                          : "border-slate-800 focus:border-amber-500"
-                      }`}
-                  />
-
-                  {formErrors.imageUrl && (
-                    <p className="text-[10px] text-rose-400">{formErrors.imageUrl}</p>
-                  )}
-
-                  {/* Or File Upload to ImageKit */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-                    <span className="text-[11px] text-slate-400">
-                      Or upload local file directly to ImageKit:
-                    </span>
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer transition">
-                      <span>📁 Choose Local File</span>
+                  {/* Multi-File Upload & URL Entry Bar */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                    {/* Choose Local Files Button (Select up to 10) */}
+                    <label className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer transition shadow-md shrink-0">
+                      <span>📁 Select Local Photos (Up to 10)</span>
                       <input
                         type="file"
+                        multiple
                         accept="image/*"
                         onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleFileUpload(file);
+                          if (e.target.files) handleMultipleFilesUpload(e.target.files);
+                          e.target.value = "";
                         }}
                         className="hidden"
                       />
                     </label>
+
+                    {/* Or Manual URL Add */}
+                    <div className="flex flex-1 items-center gap-1.5">
+                      <input
+                        type="url"
+                        value={manualUrlInput}
+                        onChange={(e) => setManualUrlInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddManualUrl();
+                          }
+                        }}
+                        placeholder="Paste image URL..."
+                        className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddManualUrl}
+                        className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer transition shrink-0"
+                      >
+                        + Add URL
+                      </button>
+                    </div>
                   </div>
-                  {isUploadingFile && (
-                    <div className="text-[11px] text-amber-400 animate-pulse">
-                      Uploading to ImageKit, please wait...
+
+                  {fileUploadError && (
+                    <div className="p-2.5 bg-rose-950/40 border border-rose-500/40 rounded-xl text-[11px] text-rose-300">
+                      {fileUploadError}
                     </div>
                   )}
-                  {fileUploadError && (
-                    <div className="text-[10px] text-rose-400">{fileUploadError}</div>
+
+                  {formErrors.imageUrl && (
+                    <p className="text-[10px] text-rose-400 font-medium">{formErrors.imageUrl}</p>
                   )}
 
-                  {/* Real-time Image Visual Preview Canvas */}
-                  {formImageUrl && (
-                    <div className="pt-2 space-y-2">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400">
-                        <span>Live Image Preview</span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewAspectRatio("contain")}
-                            className={`px-2 py-0.5 rounded ${previewAspectRatio === "contain" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-800 text-slate-300"}`}
-                          >
-                            Full
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewAspectRatio("16-9")}
-                            className={`px-2 py-0.5 rounded ${previewAspectRatio === "16-9" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-800 text-slate-300"}`}
-                          >
-                            16:9
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewAspectRatio("3-4")}
-                            className={`px-2 py-0.5 rounded ${previewAspectRatio === "3-4" ? "bg-amber-500 text-slate-950 font-bold" : "bg-slate-800 text-slate-300"}`}
-                          >
-                            3:4
-                          </button>
-                        </div>
+                  {/* Thumbnail Gallery List */}
+                  {formImages.length > 0 ? (
+                    <div className="space-y-2 pt-2">
+                      <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                        <span>Selected Photos (Click any to set as primary cover):</span>
+                        <span className="text-[10px] text-amber-400">★ Photo #1 is Cover</span>
                       </div>
 
-                      <div
-                        className={`relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center transition-all ${previewAspectRatio === "3-4" ? "h-64 sm:h-72" : previewAspectRatio === "16-9" ? "h-44 sm:h-52" : "h-52"
-                          }`}
-                      >
-                        {imageVerificationStatus === "valid" ? (
-                          <>
-                            <Image
-                              src={formImageUrl}
-                              alt=""
-                              fill
-                              className="object-cover blur-xl scale-110 opacity-30 pointer-events-none"
-                              unoptimized
-                              aria-hidden="true"
-                            />
-                            <div className="relative w-full h-full p-2 flex items-center justify-center">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                        {formImages.map((photo, idx) => {
+                          const isCover = idx === 0;
+                          return (
+                            <div
+                              key={photo.id}
+                              className={`group relative aspect-square rounded-xl overflow-hidden bg-slate-900 border-2 transition ${isCover ? "border-amber-500 shadow-md shadow-amber-500/20" : "border-slate-800 hover:border-slate-600"
+                                }`}
+                            >
                               <Image
-                                src={formImageUrl}
-                                alt="Preview"
+                                src={photo.previewUrl}
+                                alt={`Photo ${idx + 1}`}
                                 fill
-                                sizes="500px"
-                                className="object-contain drop-shadow-md"
                                 unoptimized
+                                className="object-cover"
                               />
+
+                              {/* Top Badge: Cover or Index */}
+                              <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1">
+                                {isCover ? (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500 text-slate-950 shadow">
+                                    ★ Cover
+                                  </span>
+                                ) : (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-black/75 text-slate-300">
+                                    #{idx + 1}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Top-Right Cross (✕) Remove Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemoveImage(idx);
+                                }}
+                                className="absolute top-1.5 right-1.5 z-20 w-5 h-5 rounded-full bg-slate-950/80 hover:bg-rose-600 border border-slate-700/60 hover:border-rose-500 text-slate-300 hover:text-white flex items-center justify-center text-[10px] font-bold transition shadow-md cursor-pointer"
+                                title="Remove this photo"
+                              >
+                                ✕
+                              </button>
+
+                              {/* Hover Action to Set Cover */}
+                              {!isCover && (
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-1 pointer-events-none">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSetCoverImage(idx);
+                                    }}
+                                    className="pointer-events-auto px-2 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-bold transition cursor-pointer shadow-lg"
+                                  >
+                                    ★ Set Cover
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                          </>
-                        ) : imageVerificationStatus === "verifying" ? (
-                          <div className="text-slate-400 text-xs animate-pulse">Loading preview...</div>
-                        ) : (
-                          <div className="p-4 text-center text-rose-300 text-xs space-y-1">
-                            <div className="text-xl">⚠️</div>
-                            <div className="font-semibold">Unable to load image</div>
-                            <div className="text-[10px] text-slate-400">
-                              Please verify the URL is public and links directly to an authentic image.
-                            </div>
-                          </div>
-                        )}
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 border-2 border-dashed border-slate-800 rounded-xl text-center space-y-1">
+                      <div className="text-2xl">🖼️</div>
+                      <div className="text-xs font-semibold text-slate-300">No photos selected yet</div>
+                      <div className="text-[11px] text-slate-500">
+                        Select up to 10 photos. They will only be uploaded when you click &quot;Publish to Website&quot;.
                       </div>
                     </div>
                   )}
@@ -1286,18 +1257,7 @@ export default function AdminMediaPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Subcategory / Tag
-                  </label>
-                  <input
-                    type="text"
-                    value={formSubcategory}
-                    onChange={(e) => setFormSubcategory(e.target.value)}
-                    placeholder="e.g. Gaura Nitai, Sandhya Aarti"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+
               </div>
 
               {/* 5. EVENT DATE & DISPLAY ORDER */}
@@ -1369,7 +1329,7 @@ export default function AdminMediaPage() {
               <div className="flex items-center justify-between pt-4 border-t border-slate-800 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setIsFormModalOpen(false)}
+                  onClick={handleCloseModal}
                   className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer"
                 >
                   Cancel
@@ -1377,13 +1337,13 @@ export default function AdminMediaPage() {
 
                 <button
                   type="submit"
-                  disabled={isSaving || (formMediaType === "IMAGE" && imageVerificationStatus === "invalid")}
+                  disabled={isSaving}
                   className="flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 disabled:opacity-50 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 transition cursor-pointer"
                 >
                   {isSaving ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                      <span>Saving...</span>
+                      <span>Uploading & Publishing...</span>
                     </>
                   ) : (
                     <span>{editingItemId ? "Update Media" : "Publish to Website"}</span>
@@ -1392,137 +1352,210 @@ export default function AdminMediaPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* LIGHTBOX / FULL MEDIA PREVIEW MODAL */}
-      {previewItem && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/90 backdrop-blur-md animate-fadeIn"
-          onClick={() => setPreviewItem(null)}
-        >
+      {
+        previewItem && (
           <div
-            className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
-            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/90 backdrop-blur-md animate-fadeIn"
+            onClick={() => setPreviewItem(null)}
           >
-            {/* Top Bar */}
-            <div className="flex items-center justify-between p-4 bg-slate-950 border-b border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500 text-slate-950">
-                  {previewItem.category}
-                </span>
-                <span className="text-white font-bold text-sm truncate max-w-xs sm:max-w-md">
-                  {previewItem.title}
-                </span>
-              </div>
-              <button
-                onClick={() => setPreviewItem(null)}
-                className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Media Body */}
-            <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-              {previewItem.mediaType === "YOUTUBE" && previewItem.youtubeVideoId ? (
-                <iframe
-                  className="w-full h-full"
-                  src={getYouTubeEmbedUrl(previewItem.youtubeVideoId, true)}
-                  title={previewItem.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              ) : (
-                <>
-                  <Image
-                    src={previewItem.imageUrl}
-                    alt=""
-                    fill
-                    className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
-                    unoptimized
-                    aria-hidden="true"
-                  />
-                  <div className="relative w-full h-full p-2 flex items-center justify-center">
-                    <Image
-                      src={previewItem.imageUrl}
-                      alt={previewItem.title}
-                      fill
-                      sizes="900px"
-                      className="object-contain drop-shadow-2xl"
-                      unoptimized
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-              <div>
-                <p className="text-slate-300">{previewItem.description || "No description provided."}</p>
-                <div className="text-[11px] text-slate-500 font-mono mt-1">
-                  Date: {previewItem.eventDate || "Recent"} • Priority: #{previewItem.displayOrder}
+            <div
+              className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Bar */}
+              <div className="flex items-center justify-between p-4 bg-slate-950 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-500 text-slate-950">
+                    {previewItem.category}
+                  </span>
+                  {(() => {
+                    const photos = Array.isArray(previewItem.images) && previewItem.images.length > 0 ? previewItem.images : [previewItem.imageUrl].filter(Boolean);
+                    if (photos.length > 1) {
+                      return (
+                        <span className="text-xs text-amber-300 font-mono bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                          Photo {previewPhotoIndex + 1} of {photos.length}
+                        </span>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <span className="text-white font-bold text-sm truncate max-w-xs sm:max-w-md">
+                    {previewItem.title}
+                  </span>
                 </div>
+                <button
+                  onClick={() => setPreviewItem(null)}
+                  className="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center text-xs font-bold cursor-pointer"
+                >
+                  ✕
+                </button>
               </div>
 
-              {previewItem.externalUrl && (
-                <a
-                  href={previewItem.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 self-start sm:self-center"
-                >
-                  Open External Link ↗
-                </a>
-              )}
+              {/* Media Body */}
+              <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
+                {previewItem.mediaType === "YOUTUBE" && previewItem.youtubeVideoId ? (
+                  <iframe
+                    className="w-full h-full"
+                    src={getYouTubeEmbedUrl(previewItem.youtubeVideoId, true)}
+                    title={previewItem.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (() => {
+                  const photos = Array.isArray(previewItem.images) && previewItem.images.length > 0 ? previewItem.images : [previewItem.imageUrl].filter(Boolean);
+                  const currentPhotoUrl = photos[previewPhotoIndex] || previewItem.imageUrl;
+                  return (
+                    <>
+                      <Image
+                        src={currentPhotoUrl}
+                        alt=""
+                        fill
+                        className="object-cover blur-2xl scale-110 opacity-40 pointer-events-none"
+                        unoptimized
+                        aria-hidden="true"
+                      />
+                      <div className="relative w-full h-full p-2 flex items-center justify-center">
+                        <Image
+                          src={currentPhotoUrl}
+                          alt={previewItem.title}
+                          fill
+                          sizes="900px"
+                          className="object-contain drop-shadow-2xl transition-opacity duration-300"
+                          unoptimized
+                        />
+                      </div>
+
+                      {/* Slider Navigation Arrows */}
+                      {photos.length > 1 && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewPhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+                            }}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/90 hover:scale-105 text-white border border-white/20 flex items-center justify-center text-xl transition-all cursor-pointer shadow-xl z-20"
+                            title="Previous Photo (←)"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewPhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/90 hover:scale-105 text-white border border-white/20 flex items-center justify-center text-xl transition-all cursor-pointer shadow-xl z-20"
+                            title="Next Photo (→)"
+                          >
+                            ›
+                          </button>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Multi-photo thumbnail bar in admin preview */}
+              {(() => {
+                const photos = Array.isArray(previewItem.images) && previewItem.images.length > 0 ? previewItem.images : [previewItem.imageUrl].filter(Boolean);
+                if (photos.length <= 1) return null;
+                return (
+                  <div className="px-4 py-2 bg-slate-950/90 border-t border-slate-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                    {photos.map((pUrl, pIdx) => {
+                      const isSelected = pIdx === previewPhotoIndex;
+                      return (
+                        <button
+                          key={pUrl + pIdx}
+                          type="button"
+                          onClick={() => setPreviewPhotoIndex(pIdx)}
+                          className={`relative w-11 h-11 rounded-lg overflow-hidden shrink-0 border-2 transition cursor-pointer ${
+                            isSelected ? "border-amber-400 scale-105 shadow-md shadow-amber-400/30" : "border-slate-800 opacity-60 hover:opacity-100"
+                          }`}
+                        >
+                          <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized className="object-cover" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-950 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <p className="text-slate-300">{previewItem.description || "No description provided."}</p>
+                  <div className="text-[11px] text-slate-500 font-mono mt-1">
+                    Date: {previewItem.eventDate || "Recent"} • Priority: #{previewItem.displayOrder}
+                  </div>
+                </div>
+
+                {previewItem.externalUrl && (
+                  <a
+                    href={previewItem.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shrink-0 self-start sm:self-center"
+                  >
+                    Open External Link ↗
+                  </a>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* DELETE CONFIRMATION MODAL */}
-      {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl mx-auto">
-              🗑️
-            </div>
-            <div className="text-center">
-              <h3 className="text-base font-bold text-white">Delete Media Item?</h3>
-              <p className="text-xs text-slate-300 mt-2">
-                Are you sure you want to permanently delete this media from the website:
-              </p>
-              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 mt-3 text-xs font-semibold text-amber-300 truncate">
-                {deleteTarget.title} ({deleteTarget.category})
+      {
+        deleteTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 text-xl mx-auto">
+                🗑️
               </div>
-              <p className="text-[11px] text-slate-500 mt-2">
-                This item will be removed from the public website gallery.
-              </p>
-            </div>
+              <div className="text-center">
+                <h3 className="text-base font-bold text-white">Delete Media Item?</h3>
+                <p className="text-xs text-slate-300 mt-2">
+                  Are you sure you want to permanently delete this media from the website:
+                </p>
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 mt-3 text-xs font-semibold text-amber-300 truncate">
+                  {deleteTarget.title} ({deleteTarget.category})
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2">
+                  This item will be removed from the public website gallery.
+                </p>
+              </div>
 
-            <div className="flex items-center justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={isDeleting}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition cursor-pointer"
-              >
-                {isDeleting ? "Deleting..." : "Yes, Delete Media"}
-              </button>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:opacity-50 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition cursor-pointer"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, Delete Media"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
