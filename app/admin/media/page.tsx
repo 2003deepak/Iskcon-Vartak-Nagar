@@ -13,6 +13,7 @@ import {
   isValidHttpUrl,
   isValidInstagramUrl,
   extractInstagramShortcode,
+  fetchInstagramPreview,
 } from "@/lib/media-utils";
 import { MediaCategory, MediaType } from "@/models/MediaItem";
 
@@ -97,6 +98,7 @@ export default function AdminMediaPage() {
   const [formDisplayOrder, setFormDisplayOrder] = useState<number>(0);
   const [formIsFeatured, setFormIsFeatured] = useState<boolean>(false);
   const [formIsPublished, setFormIsPublished] = useState<boolean>(true);
+  const [isFetchingInsta, setIsFetchingInsta] = useState<boolean>(false);
 
   // Image Verification State
   const [imageVerificationStatus, setImageVerificationStatus] = useState<"idle" | "verifying" | "valid" | "invalid">("idle");
@@ -289,11 +291,13 @@ export default function AdminMediaPage() {
     setFormIsFeatured(item.isFeatured);
     setFormIsPublished(item.isPublished);
 
-    if (item.imageUrl || initialUrls[0]) {
-      verifyImage(item.imageUrl || initialUrls[0]);
-    } else {
-      setImageVerificationStatus("idle");
-      setImageDimensions(null);
+    if (item.mediaType === "INSTAGRAM_REEL" && item.externalUrl && (!item.imageUrl || item.imageUrl === "/hero_bg.jpeg")) {
+      fetchInstagramPreview(item.externalUrl).then((preview) => {
+        if (preview?.imageUrl) {
+          setFormImageUrl(preview.imageUrl);
+          setFormImages([{ id: `existing-insta-${item._id}`, previewUrl: preview.imageUrl, remoteUrl: preview.imageUrl }]);
+        }
+      });
     }
 
     setIsFormModalOpen(true);
@@ -323,13 +327,53 @@ export default function AdminMediaPage() {
     showToast(`Added ${newPhotos.length} photo(s) to staging queue.`);
   };
 
+  const handleInstagramUrlChange = async (url: string) => {
+    setFormExternalUrl(url);
+    if (!url.trim()) {
+      setFormImageUrl("");
+      setFormImages([]);
+      return;
+    }
+    if (isValidInstagramUrl(url)) {
+      setIsFetchingInsta(true);
+      try {
+        const preview = await fetchInstagramPreview(url);
+        if (preview?.imageUrl) {
+          setFormImageUrl(preview.imageUrl);
+          setFormImages([{ id: `insta-${Date.now()}`, previewUrl: preview.imageUrl, remoteUrl: preview.imageUrl }]);
+        }
+        if (preview?.title && !formTitle) {
+          setFormTitle(preview.title);
+        }
+      } catch (err) {
+        console.error("Failed to fetch reel preview:", err);
+      } finally {
+        setIsFetchingInsta(false);
+      }
+    }
+  };
+
   const handleAddManualUrl = () => {
     if (!manualUrlInput.trim()) return;
+    const url = manualUrlInput.trim();
+
+    if (formMediaType === "INSTAGRAM_REEL") {
+      const newPhoto: StagedPhoto = {
+        id: `url-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        previewUrl: url,
+        remoteUrl: url,
+      };
+      setFormImages([newPhoto]);
+      setFormImageUrl(url);
+      setManualUrlInput("");
+      showToast("Added Reel poster URL.");
+      return;
+    }
+
     if (formImages.length >= 10) {
       showToast("Maximum 10 photos allowed.");
       return;
     }
-    const url = manualUrlInput.trim();
     if (!formImages.some((p) => p.remoteUrl === url || p.previewUrl === url)) {
       const newPhoto: StagedPhoto = {
         id: `url-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -462,7 +506,8 @@ export default function AdminMediaPage() {
           finalCoverUrl = getYouTubeThumbnail(vidId, "maxres");
         }
       } else if (formMediaType === "INSTAGRAM_REEL") {
-        finalCoverUrl = "/hero_bg.jpeg";
+        finalCoverUrl = formImageUrl || (formImages[0]?.previewUrl) || "/hero_bg.jpeg";
+        finalImagesList = [finalCoverUrl];
       }
 
       const payload = {
@@ -1169,7 +1214,7 @@ export default function AdminMediaPage() {
 
               {/* INSTAGRAM REEL ENTRY */}
               {formMediaType === "INSTAGRAM_REEL" && (
-                <div className="space-y-3 p-4 bg-slate-950/70 border border-slate-800 rounded-2xl">
+                <div className="space-y-4 p-4 bg-slate-950/70 border border-slate-800 rounded-2xl">
                   <div>
                     <label className="block text-xs font-semibold text-slate-200 mb-1">
                       Instagram Reel URL <span className="text-amber-400">*</span>
@@ -1177,7 +1222,7 @@ export default function AdminMediaPage() {
                     <input
                       type="url"
                       value={formExternalUrl}
-                      onChange={(e) => setFormExternalUrl(e.target.value)}
+                      onChange={(e) => handleInstagramUrlChange(e.target.value)}
                       placeholder="https://www.instagram.com/reel/C8xYz12345/ or https://www.instagram.com/p/..."
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
                     />
@@ -1186,22 +1231,63 @@ export default function AdminMediaPage() {
                     )}
                   </div>
 
+                  {isFetchingInsta && (
+                    <div className="p-4 text-center text-xs text-amber-400 flex items-center justify-center gap-2">
+                      <span className="w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                      <span>Fetching Instagram Reel preview...</span>
+                    </div>
+                  )}
+
                   {formExternalUrl && isValidInstagramUrl(formExternalUrl) && (
-                    <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-semibold">
-                        <span>📱 Valid Instagram Link</span>
-                        {extractInstagramShortcode(formExternalUrl) && (
-                          <span className="font-mono text-slate-400">({extractInstagramShortcode(formExternalUrl)})</span>
-                        )}
+                    <div className="space-y-3 pt-1">
+                      <div className="p-3 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-semibold">
+                          <span>📱 Valid Instagram Link</span>
+                          {extractInstagramShortcode(formExternalUrl) && (
+                            <span className="font-mono text-slate-400">({extractInstagramShortcode(formExternalUrl)})</span>
+                          )}
+                        </div>
+                        <a
+                          href={formExternalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-amber-400 hover:text-amber-300 text-[11px] underline"
+                        >
+                          Open in Instagram ↗
+                        </a>
                       </div>
-                      <a
-                        href={formExternalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-amber-400 hover:text-amber-300 text-[11px] underline"
-                      >
-                        Open in Instagram ↗
-                      </a>
+
+                      {/* Custom Instagram Reel Preview Card matching requested design */}
+                      {formImageUrl && (
+                        <div className="w-full max-w-xs mx-auto rounded-2xl overflow-hidden bg-slate-900 border border-slate-700 shadow-xl relative group">
+                          <div className="relative aspect-[9/16] max-h-80 w-full overflow-hidden bg-black">
+                            <Image
+                              src={formImageUrl}
+                              alt="Instagram Reel Preview"
+                              fill
+                              unoptimized
+                              className="object-cover"
+                            />
+                            {/* Dark overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/60 pointer-events-none" />
+
+                            {/* Play Button */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-white/95 text-[#8b1e3f] flex items-center justify-center shadow-xl pointer-events-none">
+                              <span className="w-0 h-0 border-y-[8px] border-y-transparent border-l-[14px] border-l-[#8b1e3f] ml-1" />
+                            </div>
+
+                            {/* Watch on Instagram badge */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 backdrop-blur-xs text-white text-[11px] font-semibold px-3 py-1 rounded-full whitespace-nowrap pointer-events-none">
+                              Watch on Instagram
+                            </div>
+
+                            {/* Instagram Reel tag */}
+                            <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-xs text-white text-[10px] font-medium px-2.5 py-0.5 rounded-full pointer-events-none">
+                              Instagram Reel
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -5,6 +5,7 @@ import ProgramEvent from "@/models/ProgramEvent";
 import VaishnavEvent from "@/models/VaishnavEvent";
 import AdminUser from "@/models/AdminUser";
 import MediaItem from "@/models/MediaItem";
+import VolunteerApplication from "@/models/VolunteerApplication";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +38,11 @@ export async function GET(request: NextRequest) {
       featuredMedia,
       imageCount,
       videoCount,
+      totalVolunteers,
       recentEvents,
       upcomingFestivals,
       recentMedia,
+      recentVolunteers,
     ] = await Promise.all([
       VaishnavEvent.countDocuments(),
       VaishnavEvent.countDocuments({ year: currentYear }),
@@ -54,9 +57,11 @@ export async function GET(request: NextRequest) {
       MediaItem.countDocuments({ isFeatured: true }),
       MediaItem.countDocuments({ mediaType: "IMAGE" }),
       MediaItem.countDocuments({ mediaType: { $in: ["YOUTUBE", "INSTAGRAM_REEL"] } }),
+      VolunteerApplication.countDocuments(),
       ProgramEvent.find().sort({ createdAt: -1 }).limit(5).lean(),
       VaishnavEvent.find({ year: currentYear }).sort({ dateString: 1 }).limit(5).lean(),
       MediaItem.find().sort({ createdAt: -1 }).limit(6).lean(),
+      VolunteerApplication.find().sort({ submittedAt: -1 }).limit(5).lean(),
     ]);
 
     return NextResponse.json({
@@ -77,10 +82,12 @@ export async function GET(request: NextRequest) {
           featuredMedia,
           imageCount,
           videoCount,
+          totalVolunteers,
         },
         recentEvents,
         upcomingFestivals,
         recentMedia,
+        recentVolunteers,
       },
     });
   } catch (error: any) {

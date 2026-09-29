@@ -12,6 +12,7 @@ interface Slide {
   subtitle: string;
   primaryCta: { text: string; href: string };
   secondaryCta: { text: string; href: string };
+  objectPosition?: string;
 }
 
 const slides: Slide[] = [
@@ -24,6 +25,7 @@ const slides: Slide[] = [
     subtitle: "Experience divine peace, spiritual wisdom, and joyful devotion in the heart of Thane.",
     primaryCta: { text: "Visit Temple", href: "#schedule" },
     secondaryCta: { text: "Explore Events", href: "#festivals" },
+    objectPosition: "object-[center_20%] md:object-center",
   },
   {
     id: 2,
@@ -34,6 +36,7 @@ const slides: Slide[] = [
     subtitle: "Immerse yourself in daily morning & evening Mangala Aarti, Sandhya Aarti and serene meditation.",
     primaryCta: { text: "Temple Timings", href: "#schedule" },
     secondaryCta: { text: "Get Directions", href: "#location" },
+    objectPosition: "object-[center_20%] md:object-center",
   },
   {
     id: 3,
@@ -44,6 +47,7 @@ const slides: Slide[] = [
     subtitle: "Celebrate Janmashtami, Radhastami, Ratha Yatra and weekly Sunday feasts with joyful kirtan.",
     primaryCta: { text: "Upcoming Events", href: "#festivals" },
     secondaryCta: { text: "Join Community", href: "#community" },
+    objectPosition: "object-[center_25%] md:object-center",
   },
   {
     id: 4,
@@ -54,6 +58,7 @@ const slides: Slide[] = [
     subtitle: "Discover timeless Vedic wisdom, participate in volunteer seva, and relish pure sanctified food.",
     primaryCta: { text: "Offer Seva", href: "#donate" },
     secondaryCta: { text: "Learn More", href: "#about" },
+    objectPosition: "object-[center_25%] md:object-center",
   },
 ];
 
@@ -96,13 +101,13 @@ export default function Hero() {
               isActive ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
             }`}
           >
-            <div className={`relative w-full h-full ${isActive ? "animate-ken-burns" : ""}`}>
+            <div className={`relative w-full h-full ${isActive ? "md:animate-ken-burns" : ""}`}>
               <Image
                 alt={slide.alt}
                 src={slide.image}
                 fill
                 sizes="100vw"
-                className="object-cover object-center"
+                className={`object-cover ${slide.objectPosition || "object-[center_25%] md:object-center"}`}
                 priority={index === 0}
               />
             </div>
@@ -157,22 +162,22 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Navigation Arrow Left */}
+      {/* Navigation Arrow Left (Desktop/Tablet) */}
       <button
         onClick={prevSlide}
         aria-label="Previous Slide"
-        className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        className="hidden md:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
       >
         <svg className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
       </button>
 
-      {/* Navigation Arrow Right */}
+      {/* Navigation Arrow Right (Desktop/Tablet) */}
       <button
         onClick={nextSlide}
         aria-label="Next Slide"
-        className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        className="hidden md:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-md border border-white/20 text-white items-center justify-center transition-all duration-300 group shadow-lg hover:scale-110 active:scale-95 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
       >
         <svg className="w-5 h-5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

@@ -70,7 +70,7 @@ function LoginForm() {
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-3  mb-4 backdrop-blur-md">
 
-            <Image src="/logo_white.png" alt="Logo" width={85} height={85} />
+            <Image src="/logo_white.png" alt="Logo" width={85} height={85} className="w-auto h-auto" />
 
           </div>
           <h1 className="font-serif text-3xl font-semibold tracking-wide text-white mb-1">

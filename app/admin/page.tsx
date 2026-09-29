@@ -91,11 +91,11 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Primary Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Total Media & Daily Darshan */}
         <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-5 hover:border-slate-700 transition relative overflow-hidden group">
           <div className="flex items-center justify-between text-slate-400 mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider">Media & Darshan</span>
+            <span className="text-xs font-medium uppercase tracking-wider">Media &amp; Darshan</span>
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <span className="material-symbols-outlined text-base">perm_media</span>
             </div>
@@ -108,6 +108,26 @@ export default function AdminDashboardPage() {
             <span className="text-emerald-400">{stats?.metrics.publishedMedia ?? 0} Live</span>
           </div>
         </div>
+
+        {/* Total Volunteers */}
+        <Link
+          href="/admin/volunteers"
+          className="bg-slate-900/70 border border-slate-800/90 hover:border-amber-400/40 rounded-2xl p-5 transition group relative overflow-hidden"
+        >
+          <div className="flex items-center justify-between text-slate-400 mb-3">
+            <span className="text-xs font-medium uppercase tracking-wider">Volunteers</span>
+            <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 group-hover:scale-105 transition">
+              <span className="material-symbols-outlined text-base">volunteer_activism</span>
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-white">
+            {isLoading ? "..." : (stats as any)?.metrics?.totalVolunteers ?? 0}
+          </div>
+          <div className="text-[11px] text-amber-300/80 mt-1 flex items-center justify-between">
+            <span>Website Inquiries</span>
+            <span className="text-slate-400 group-hover:text-amber-300 transition">&rarr;</span>
+          </div>
+        </Link>
 
         {/* Total Calendar Entries */}
         <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-5 hover:border-slate-700 transition">
@@ -172,6 +192,23 @@ export default function AdminDashboardPage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
+            href="/admin/volunteers"
+            className="flex items-center gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-emerald-500/40 hover:bg-slate-800/50 transition group"
+          >
+            <div className="p-2.5 rounded-lg bg-emerald-500/15 text-emerald-400 group-hover:scale-105 transition">
+              <span className="material-symbols-outlined text-lg">volunteer_activism</span>
+            </div>
+            <div>
+              <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-300 transition">
+                Manage Volunteers
+              </div>
+              <div className="text-[11px] text-slate-400">
+                Inquiries, WhatsApp &amp; Status
+              </div>
+            </div>
+          </Link>
+
+          <Link
             href="/admin/media"
             className="flex items-center gap-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-amber-500/40 hover:bg-slate-800/50 transition group"
           >
@@ -183,7 +220,7 @@ export default function AdminDashboardPage() {
                 + Add Media / Darshan
               </div>
               <div className="text-[11px] text-slate-400">
-                URL preview, YouTube & Reels
+                URL preview, YouTube &amp; Reels
               </div>
             </div>
           </Link>
@@ -202,7 +239,7 @@ export default function AdminDashboardPage() {
                 Add Program Event
               </div>
               <div className="text-[11px] text-slate-400">
-                Seminars, festivals & youth programs
+                Seminars, festivals &amp; youth
               </div>
             </div>
           </Link>

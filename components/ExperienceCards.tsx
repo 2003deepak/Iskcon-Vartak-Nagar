@@ -66,7 +66,7 @@ export default function ExperienceCards() {
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         <ScrollReveal variant="fade-up">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20 text-xs font-semibold tracking-[0.25em] text-amber-300 uppercase mb-4 shadow-xs">
@@ -91,7 +91,7 @@ export default function ExperienceCards() {
               delay={idx * 80}
               className="h-full"
             >
-              <div className="group h-full p-7 lg:p-8 rounded-2xl lg:rounded-3xl bg-white/[0.035] hover:bg-white/[0.06] border border-white/10 hover:border-amber-400/40 transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-2xl hover:shadow-amber-950/20 transform hover:-translate-y-1.5 flex flex-col justify-between">
+              <div className="group h-full p-5 sm:p-7 lg:p-8 rounded-2xl lg:rounded-3xl bg-white/[0.035] hover:bg-white/[0.06] border border-white/10 hover:border-amber-400/40 transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-2xl hover:shadow-amber-950/20 transform hover:-translate-y-1.5 flex flex-col justify-between">
                 <div>
                   {/* Top Row: Icon Medallion & Time Badge */}
                   <div className="flex items-center justify-between mb-6">

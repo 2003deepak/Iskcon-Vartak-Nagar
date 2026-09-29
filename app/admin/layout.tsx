@@ -161,6 +161,15 @@ export default function AdminLayout({
       ),
     },
     {
+      name: "Volunteers",
+      href: "/admin/volunteers",
+      icon: (
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+    },
+    {
       name: "Admin Settings",
       href: "/admin/settings",
       icon: (
@@ -192,7 +201,7 @@ export default function AdminLayout({
           <div className="h-20 px-6 flex items-center justify-between border-b border-slate-800/80 bg-slate-950/40 shrink-0">
             <Link href="/admin" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md shadow-amber-950/40">
-                <Image src="/logo_white.png" alt="Logo" width={120} height={120} />
+                <Image src="/logo_white.png" alt="Logo" width={120} height={120} className="w-auto h-auto" />
               </div>
               <div>
                 <div className="font-serif text-base font-semibold text-white tracking-wide leading-tight">

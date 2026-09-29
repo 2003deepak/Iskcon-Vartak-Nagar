@@ -18,7 +18,7 @@ export default function VisitUsSection() {
       {/* Subtle Background Pattern / Watermark */}
       <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#dfb260_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         {/* Section Header */}
         <ScrollReveal variant="fade-up">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
@@ -41,7 +41,7 @@ export default function VisitUsSection() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
           {/* Left Column: Sacred Timings & Address Card */}
           <ScrollReveal variant="fade-up" delay={100} className="lg:col-span-6 h-full flex flex-col">
-            <div className="h-full p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-white/[0.05] to-white/[0.02] border border-amber-500/20 shadow-2xl backdrop-blur-md flex flex-col justify-between space-y-8">
+            <div className="h-full p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-white/[0.05] to-white/[0.02] border border-amber-500/20 shadow-2xl backdrop-blur-md flex flex-col justify-between space-y-8">
               <div className="space-y-7">
                 {/* Temple Name Block */}
                 <div className="border-b border-white/10 pb-5">
@@ -98,7 +98,7 @@ export default function VisitUsSection() {
               {/* Action Buttons: Highly Visible Primary CTA + Secondary CTA */}
               <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-white/10">
                 <a
-                  className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md shadow-amber-950/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
+                  className="flex-1 inline-flex items-center justify-center gap-2.5 py-3.5 sm:py-4 px-5 sm:px-6 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md shadow-amber-950/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200 text-center focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-300"
                   href="https://maps.google.com/?q=Vartak+Nagar+ISKCON+CENTER"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -109,7 +109,7 @@ export default function VisitUsSection() {
 
                 <Link
                   href="/#schedule"
-                  className="flex-1 inline-flex items-center justify-center gap-2.5 py-4 px-6 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs sm:text-sm font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-center"
+                  className="flex-1 inline-flex items-center justify-center gap-2.5 py-3.5 sm:py-4 px-5 sm:px-6 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs sm:text-sm font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-center"
                 >
                   <span className="material-symbols-outlined text-lg">calendar_month</span>
                   <span>View Temple Timings</span>
@@ -148,6 +148,7 @@ export default function VisitUsSection() {
                         src="/logo_white.png"
                         alt="ISKCON Logo"
                         fill
+                        sizes="40px"
                         className="object-contain p-1"
                       />
                     </div>

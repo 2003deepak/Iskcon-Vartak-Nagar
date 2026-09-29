@@ -175,7 +175,7 @@ export default function VaishnavCalendar() {
       className="w-full py-20 lg:py-28 bg-[#faf7f2] border-b border-stone-200/60 text-slate-800"
       id="calendar"
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8">
         {/* Section Header */}
         <ScrollReveal variant="fade-up">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">

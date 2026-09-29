@@ -38,7 +38,7 @@ export default function DevotionInAction() {
       <div className="absolute top-1/4 -left-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-48 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center mb-16">
           {/* Left Content */}
           <div className="lg:col-span-7 flex flex-col space-y-6">
@@ -80,9 +80,9 @@ export default function DevotionInAction() {
             </div>
 
             <ScrollReveal variant="fade-up" delay={300}>
-              <div className="flex flex-wrap items-center gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 w-full sm:w-auto">
                 <a
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-950/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs font-bold uppercase tracking-wider shadow-md shadow-amber-950/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-amber-950/40 active:translate-y-0 transition-all duration-200 text-center"
                   href="/support-us#donate"
                 >
                   <span>Find Your Seva</span>
@@ -91,7 +91,7 @@ export default function DevotionInAction() {
                   </span>
                 </a>
                 <a
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 sm:px-7 py-3.5 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-[#dfb260] hover:text-[#fce8b8] text-xs font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 text-center"
                   href="/support-us#volunteer"
                 >
                   Become a Volunteer
@@ -106,7 +106,7 @@ export default function DevotionInAction() {
               <div className="rounded-2xl lg:rounded-3xl overflow-hidden shadow-2xl border border-white/10">
                 <Image
                   alt="Devotees sitting together singing joyful devotional kirtan with mridanga drum and hand cymbals"
-                  className="w-full aspect-[4/3] object-cover object-center"
+                  className="w-full h-auto aspect-[4/3] object-cover object-center"
                   src="/congregation.jpg"
                   width={600}
                   height={450}

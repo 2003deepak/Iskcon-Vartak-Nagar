@@ -72,6 +72,24 @@ export function extractInstagramShortcode(url: string): string | null {
 }
 
 /**
+ * Fetches Instagram Reel / Post thumbnail and metadata via Microlink API
+ */
+export async function fetchInstagramPreview(url: string): Promise<{ imageUrl?: string; title?: string } | null> {
+  if (!url || typeof url !== "string") return null;
+  try {
+    const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url.trim())}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    const imageUrl = json?.data?.image?.url || undefined;
+    const title = json?.data?.title || undefined;
+    return { imageUrl, title };
+  } catch (err) {
+    console.error("Failed to fetch Instagram preview:", err);
+    return null;
+  }
+}
+
+/**
  * Validates whether string is a valid HTTP/HTTPS URL
  */
 export function isValidHttpUrl(string: string): boolean {

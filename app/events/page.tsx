@@ -127,7 +127,7 @@ export default function EventsPage() {
                   <div className="absolute top-4 left-4 z-10">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 font-bold text-[11px] tracking-wider uppercase shadow-lg">
                       <span className="material-symbols-outlined text-xs">star</span>
-                      Featured Festival
+                      Featured Event
                     </span>
                   </div>
                 </div>
@@ -210,7 +210,7 @@ export default function EventsPage() {
         )}
 
         {/* Main Events Grid */}
-        <section className="w-full py-10 lg:py-16 px-6 sm:px-8 max-w-7xl mx-auto">
+        <section className="w-full py-10 lg:py-16 px-5 sm:px-8 max-w-7xl mx-auto">
           {/* Section Header & Search */}
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
             <div>
@@ -415,8 +415,8 @@ export default function EventsPage() {
         </section>
 
         {/* Sponsor / Host Program Callout Banner */}
-        <section className="w-full py-14 px-6 sm:px-8 max-w-7xl mx-auto mb-16">
-          <div className="p-8 sm:p-12 lg:p-14 rounded-3xl bg-gradient-to-r from-[#0a1628] via-[#0f233d] to-[#0a1628] text-white shadow-xl border border-amber-500/25 relative overflow-hidden text-center sm:text-left">
+        <section className="w-full py-14 px-5 sm:px-8 max-w-7xl mx-auto mb-16">
+          <div className="p-6 sm:p-12 lg:p-14 rounded-3xl bg-gradient-to-r from-[#0a1628] via-[#0f233d] to-[#0a1628] text-white shadow-xl border border-amber-500/25 relative overflow-hidden text-center sm:text-left">
             <div className="absolute top-1/2 right-10 -translate-y-1/2 w-[400px] h-[200px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
               <div className="lg:col-span-8 space-y-3">

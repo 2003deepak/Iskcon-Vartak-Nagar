@@ -9,7 +9,7 @@ export default function PrabhupadaTribute() {
       className="w-full py-10 sm:py-12 lg:py-14 bg-[#0a1628] border-b border-white/5 text-slate-100 overflow-hidden flex items-center"
       id="about"
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 w-full">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left: Acharya Image Container */}
           <div className="lg:col-span-5 flex justify-center">
@@ -18,7 +18,7 @@ export default function PrabhupadaTribute() {
                 <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-[#060d18] border border-white/10">
                   <Image
                     alt="Historical archival portrait of His Divine Grace A.C. Bhaktivedanta Swami Prabhupada"
-                    className="w-full aspect-[4/5] object-cover object-top max-h-[380px] sm:max-h-[420px]"
+                    className="w-full h-auto aspect-[4/5] object-cover object-top max-h-[380px] sm:max-h-[420px]"
                     src="/prabhupad.jpg"
                     width={400}
                     height={500}

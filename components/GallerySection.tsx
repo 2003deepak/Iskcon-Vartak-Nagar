@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import ScrollReveal from "@/components/ScrollReveal";
 
+import { extractInstagramShortcode } from "@/lib/media-utils";
+
 interface MediaRecord {
   id: string;
   title: string;
@@ -156,6 +158,11 @@ export default function GallerySection() {
             let embedUrl = undefined;
             if (item.mediaType === "YOUTUBE" && item.youtubeVideoId) {
               embedUrl = `https://www.youtube.com/embed/${item.youtubeVideoId}?autoplay=1&rel=0`;
+            } else if (item.mediaType === "INSTAGRAM_REEL" && item.externalUrl) {
+              const shortcode = extractInstagramShortcode(item.externalUrl);
+              if (shortcode) {
+                embedUrl = `https://www.instagram.com/p/${shortcode}/embed`;
+              }
             }
 
             // Determine bento aspect span dynamically based on index & type
@@ -204,7 +211,7 @@ export default function GallerySection() {
       <div className="absolute top-1/3 -right-40 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -left-40 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 relative z-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 relative z-10">
         {/* Header Strip */}
         <ScrollReveal variant="fade-up">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
@@ -221,46 +228,38 @@ export default function GallerySection() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3 self-start md:self-end">
-              <Link
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-transparent hover:bg-[#dfb260]/10 border-[1.5px] border-[#dfb260] text-amber-900 hover:text-amber-950 text-xs font-semibold uppercase tracking-wider hover:-translate-y-0.5 active:translate-y-0 shadow-xs transition-all duration-200 cursor-pointer"
-                href="/media"
-              >
-                <span>More Media</span>
-                <span className="material-symbols-outlined text-sm">
-                  arrow_forward
-                </span>
-              </Link>
-            </div>
+
           </div>
         </ScrollReveal>
 
         {/* Category Filter Pills */}
         <ScrollReveal variant="fade-up" delay={80}>
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar scroll-smooth">
-            {categoryList.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap cursor-pointer ${selectedCategory === cat
-                  ? "bg-[#0a1628] text-white shadow-md shadow-slate-950/20"
-                  : "bg-white text-slate-600 hover:text-slate-900 border border-stone-200/90 hover:border-stone-300"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="relative mb-8">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+              {categoryList.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`snap-start shrink-0 px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-all whitespace-nowrap cursor-pointer ${selectedCategory === cat
+                    ? "bg-[#0a1628] text-white shadow-md shadow-slate-950/20"
+                    : "bg-white text-slate-600 hover:text-slate-900 border border-stone-200/90 hover:border-stone-300"
+                    }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            {/* Mobile right-edge fade gradient to visually indicate scrollable content */}
+            <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-[#faf7f2] via-[#faf7f2]/80 to-transparent pointer-events-none md:hidden" />
           </div>
         </ScrollReveal>
 
-        {/* Editorial Bento Grid for Desktop / Responsive Grid for Mobile */}
+        {/* Editorial Bento Grid for Desktop / Responsive Grid for Mobile (1st Big, 2nd Side, 3rd Centered Bottom) */}
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch animate-pulse">
-            <div className="lg:col-span-8 h-80 rounded-3xl bg-slate-200" />
-            <div className="lg:col-span-4 h-80 rounded-3xl bg-slate-200" />
-            <div className="lg:col-span-4 h-64 rounded-3xl bg-slate-200" />
-            <div className="lg:col-span-4 h-64 rounded-3xl bg-slate-200" />
-            <div className="lg:col-span-4 h-64 rounded-3xl bg-slate-200" />
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch animate-pulse">
+            <div className="md:col-span-8 h-96 rounded-3xl bg-slate-200" />
+            <div className="md:col-span-4 h-96 rounded-3xl bg-slate-200" />
+            <div className="md:col-span-6 md:col-start-4 h-80 rounded-3xl bg-slate-200" />
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="py-16 text-center bg-white/70 rounded-3xl border border-stone-200 p-8">
@@ -269,95 +268,138 @@ export default function GallerySection() {
             <p className="text-xs text-slate-500 mt-1">No items match the selected category &quot;{selectedCategory}&quot;.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6 items-stretch">
-            {filteredItems.map((item, idx) => (
-              <ScrollReveal
-                key={item.id}
-                variant="fade-up"
-                delay={idx * 60}
-                className={`${selectedCategory === "All" ? item.aspectSpan : "lg:col-span-6"
-                  } h-full min-h-[300px] lg:min-h-[360px]`}
-              >
-                <div
-                  onClick={() => {
-                    if (item.type === "video" && !item.videoEmbedUrl && item.externalUrl) {
-                      window.open(item.externalUrl, "_blank", "noopener,noreferrer");
-                    } else {
-                      handleOpenMedia(item);
-                    }
-                  }}
-                  className="group relative h-full w-full rounded-3xl overflow-hidden bg-slate-900 border border-stone-200/80 hover:border-amber-400/50 shadow-md hover:shadow-2xl hover:shadow-amber-950/20 transition-all duration-500 cursor-pointer flex flex-col justify-end"
-                >
-                  {/* Image Media Container with smooth zoom */}
-                  <Image
-                    src={item.src}
-                    alt={item.title}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 66vw"
-                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                    loading="lazy"
-                  />
+          <div className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+              {filteredItems.slice(0, 3).map((item, idx) => {
+                const total = filteredItems.slice(0, 3).length;
+                const spanClass =
+                  total === 1
+                    ? "col-span-1 md:col-span-12 max-w-3xl mx-auto w-full min-h-[420px]"
+                    : total === 2
+                    ? idx === 0
+                      ? "col-span-1 md:col-span-7 lg:col-span-8 min-h-[400px] lg:min-h-[460px]"
+                      : "col-span-1 md:col-span-5 lg:col-span-4 min-h-[400px] lg:min-h-[460px]"
+                    : idx === 0
+                    ? "col-span-1 md:col-span-7 lg:col-span-8 min-h-[400px] lg:min-h-[480px]"
+                    : idx === 1
+                    ? "col-span-1 md:col-span-5 lg:col-span-4 min-h-[400px] lg:min-h-[480px]"
+                    : "col-span-1 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4 min-h-[360px] lg:min-h-[420px]";
 
-                  {/* Subtle Editorial Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-[#060d18]/40 to-black/10 opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+                const isBigCard = idx === 0 && total >= 2;
 
-                  {/* Video Play Button Overlay for Videos */}
-                  {item.type === "video" && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="relative flex items-center justify-center">
-                        <div className="absolute w-20 h-20 rounded-full bg-amber-500/20 animate-ping opacity-75" />
-                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/60 text-[#dfb260] flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-[#d97706] group-hover:text-white group-hover:border-white">
-                          <svg className="w-7 h-7 translate-x-0.5 fill-current" viewBox="0 0 24 24">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
+                return (
+                  <ScrollReveal
+                    key={item.id}
+                    variant="fade-up"
+                    delay={idx * 90}
+                    className={`${spanClass} h-full`}
+                  >
+                    <div
+                      onClick={() => {
+                        if (item.type === "video" && !item.videoEmbedUrl && item.externalUrl) {
+                          window.open(item.externalUrl, "_blank", "noopener,noreferrer");
+                        } else {
+                          handleOpenMedia(item);
+                        }
+                      }}
+                      className="group relative h-full w-full rounded-3xl overflow-hidden bg-slate-900 border border-stone-200/80 hover:border-amber-400/60 shadow-md hover:shadow-2xl hover:shadow-amber-950/25 transition-all duration-500 cursor-pointer flex flex-col justify-end"
+                    >
+                      {/* Image Media Container with smooth zoom */}
+                      <Image
+                        src={item.src}
+                        alt={item.title}
+                        fill
+                        unoptimized
+                        sizes={
+                          isBigCard
+                            ? "(max-width: 1024px) 100vw, 66vw"
+                            : idx === 1
+                            ? "(max-width: 1024px) 100vw, 33vw"
+                            : "(max-width: 1024px) 100vw, 50vw"
+                        }
+                        className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                        loading="lazy"
+                      />
+
+                      {/* Subtle Editorial Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-[#060d18]/40 to-black/10 opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+
+                      {/* Video Play Button Overlay for Videos */}
+                      {item.type === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="relative flex items-center justify-center">
+                            <div className="absolute w-20 h-20 rounded-full bg-amber-500/20 animate-ping opacity-75" />
+                            <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/60 text-[#dfb260] flex items-center justify-center shadow-2xl transition-all duration-300 group-hover:scale-110 group-hover:bg-[#d97706] group-hover:text-white group-hover:border-white">
+                              <svg className="w-7 h-7 translate-x-0.5 fill-current" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Top Badge: Category / Duration / Photo Count */}
+                      <div className="relative top-0 left-0 right-0 p-4 sm:p-5 flex items-center justify-between z-10 gap-2 flex-wrap">
+                        <div className="flex items-center gap-2">
+                          {isBigCard ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-bold uppercase tracking-wider shadow-md">
+                              ★ Featured Spotlight
+                            </span>
+                          ) : null}
+
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold uppercase tracking-wider shadow-sm">
+                            {item.type === "video" && (
+                              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                            )}
+                            <span>{item.tag}</span>
+                          </span>
+
+                          {Array.isArray(item.images) && item.images.length > 1 && (
+                            <span className="px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold uppercase shadow-sm">
+                              📷 {item.images.length} Photos
+                            </span>
+                          )}
+                        </div>
+
+                        {item.duration && (
+                          <span className="px-2.5 py-1 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-400/30 text-amber-200 text-[11px] font-medium tracking-wide">
+                            {item.duration}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bottom Content Pill with Responsive Typography and Gap */}
+                      <div className={`relative z-10 ${isBigCard ? "p-5 sm:p-8 flex flex-col gap-1.5 sm:gap-2.5" : "p-4 sm:p-7 flex flex-col gap-1.5 sm:gap-2"} text-white`}>
+                        <h3 className={`font-serif ${isBigCard ? "text-xl sm:text-3xl lg:text-4xl" : "text-lg sm:text-2xl"} font-normal text-white group-hover:text-[#fde68a] transition-colors leading-snug tracking-tight`}>
+                          {item.title}
+                        </h3>
+                        <p className={`text-xs sm:text-sm text-slate-200/85 font-light ${isBigCard ? "line-clamp-2 sm:line-clamp-3 max-w-2xl" : "line-clamp-2"} leading-relaxed`}>
+                          {item.subtitle}
+                        </p>
+
+                        <div className="pt-1.5 sm:pt-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300 opacity-90 group-hover:opacity-100 group-hover:text-amber-200 transition-all">
+                          <span>{item.type === "video" ? "Watch Video / Reel" : "View Moment"}</span>
+                          <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">
+                            arrow_forward
+                          </span>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </ScrollReveal>
+                );
+              })}
+            </div>
 
-                  {/* Top Badge: Category / Duration / Photo Count */}
-                  <div className="absolute top-5 left-5 right-5 flex items-center justify-between z-10">
-                    <div className="flex items-center gap-1.5">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold uppercase tracking-wider shadow-sm">
-                        {item.type === "video" && (
-                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                        )}
-                        <span>{item.tag}</span>
-                      </span>
-                      {Array.isArray(item.images) && item.images.length > 1 && (
-                        <span className="px-2.5 py-1 rounded-full bg-amber-500 text-slate-950 text-[10px] font-bold uppercase shadow-sm">
-                          📷 {item.images.length} Photos
-                        </span>
-                      )}
-                    </div>
-
-                    {item.duration && (
-                      <span className="px-2.5 py-1 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-400/30 text-amber-200 text-[11px] font-medium tracking-wide">
-                        {item.duration}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Bottom Content Pill */}
-                  <div className="relative z-10 p-6 sm:p-7 text-white space-y-2">
-                    <h3 className="font-serif text-xl sm:text-2xl font-normal text-white group-hover:text-[#fde68a] transition-colors leading-snug tracking-tight">
-                      {item.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-slate-200/85 font-light line-clamp-2 leading-relaxed">
-                      {item.subtitle}
-                    </p>
-
-                    <div className="pt-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-amber-300 opacity-90 group-hover:opacity-100 group-hover:text-amber-200 transition-all">
-                      <span>{item.type === "video" ? "Watch Video" : "View Moment"}</span>
-                      <span className="material-symbols-outlined text-sm transform group-hover:translate-x-1 transition-transform">
-                        arrow_forward
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
+            {/* Bottom Call to Action Linking to Dedicated Media Page */}
+            <div className="pt-2 text-center">
+              <Link
+                href="/media"
+                className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#dfb260] hover:bg-[#cca04b] text-[#060e1b] text-xs sm:text-sm font-bold uppercase tracking-wider shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+              >
+                <span>View Full Media Archives &amp; Gallery</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </Link>
+            </div>
           </div>
         )}
       </div>
@@ -411,6 +453,7 @@ export default function GallerySection() {
                   alt={activeMedia.title}
                   fill
                   unoptimized
+                  sizes="(max-width: 1024px) 100vw, 1024px"
                   className="object-contain p-2 transition-opacity duration-300"
                   priority
                 />
@@ -453,7 +496,7 @@ export default function GallerySection() {
                         className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition cursor-pointer ${isSelected ? "border-amber-400 scale-105 shadow-md shadow-amber-400/30" : "border-white/20 opacity-60 hover:opacity-100"
                           }`}
                       >
-                        <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized className="object-cover" />
+                        <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized sizes="48px" className="object-cover" />
                       </button>
                     );
                   })}

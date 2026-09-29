@@ -1,14 +1,22 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    overflow-x: clip;
+    scroll-behavior: smooth;
+  }
+
   html,
   body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    min-width: 320px;
   }
 
   body {
-    overscroll-behavior: none;
+    overflow-x: clip;
+    overscroll-behavior-y: none;
     font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     color: #1e293b;
     background-color: #faf7f2;
@@ -17,8 +25,15 @@
     text-rendering: optimizeLegibility;
   }
 
+  /* Ensure interactive touch elements are easy to tap */
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    overflow-wrap: break-word;
+    word-wrap: break-word;
   }
 
   main > :first-child {

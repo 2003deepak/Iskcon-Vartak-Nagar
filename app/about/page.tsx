@@ -25,8 +25,8 @@ export default function AboutUsPage() {
         </section>
 
         {/* Core Narrative / Introduction */}
-        <section className="w-full py-20 lg:py-28 px-6 sm:px-8 max-w-5xl mx-auto">
-          <div className="p-8 sm:p-12 lg:p-14 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 text-slate-900 space-y-6">
+        <section className="w-full py-16 sm:py-20 lg:py-28 px-5 sm:px-8 max-w-5xl mx-auto">
+          <div className="p-6 sm:p-10 lg:p-14 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 text-slate-900 space-y-6">
             <div className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.25em] text-amber-800 uppercase">
               <span className="w-2 h-0.5 bg-amber-700"></span>
               <span>Spiritual Sanctuary</span>
@@ -41,10 +41,10 @@ export default function AboutUsPage() {
         </section>
 
         {/* Mission & Vision Section */}
-        <section className="w-full py-12 lg:py-16 px-6 sm:px-8 max-w-7xl mx-auto">
+        <section className="w-full py-12 lg:py-16 px-5 sm:px-8 max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
             {/* Our Mission */}
-            <div className="group p-8 sm:p-10 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 hover:shadow-lg transition-all duration-300 flex flex-col justify-between space-y-6">
+            <div className="group p-6 sm:p-8 lg:p-10 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 hover:shadow-lg transition-all duration-300 flex flex-col justify-between space-y-6">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/25 text-amber-700 flex items-center justify-center mb-6 shadow-inner group-hover:scale-105 group-hover:bg-amber-400/20 group-hover:border-amber-400/50 transition-all duration-300">
                   <span className="material-symbols-outlined text-2xl">
@@ -61,7 +61,7 @@ export default function AboutUsPage() {
             </div>
 
             {/* Our Vision */}
-            <div className="group p-8 sm:p-10 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 hover:shadow-lg transition-all duration-300 flex flex-col justify-between space-y-6">
+            <div className="group p-6 sm:p-8 lg:p-10 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 hover:shadow-lg transition-all duration-300 flex flex-col justify-between space-y-6">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/25 text-amber-700 flex items-center justify-center mb-6 shadow-inner group-hover:scale-105 group-hover:bg-amber-400/20 group-hover:border-amber-400/50 transition-all duration-300">
                   <span className="material-symbols-outlined text-2xl">
@@ -80,7 +80,7 @@ export default function AboutUsPage() {
         </section>
 
         {/* Services We Offer */}
-        <section className="w-full py-20 lg:py-28 px-6 sm:px-8 max-w-7xl mx-auto">
+        <section className="w-full py-16 sm:py-20 lg:py-28 px-5 sm:px-8 max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-400/20 text-xs font-semibold tracking-[0.25em] text-amber-800 uppercase mb-4 shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse"></span>
@@ -96,7 +96,7 @@ export default function AboutUsPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
             {/* Spiritual Education */}
-            <div className="group p-8 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 flex flex-col justify-between space-y-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+            <div className="group p-6 sm:p-8 rounded-2xl lg:rounded-3xl bg-white shadow-sm border border-stone-200/80 hover:border-amber-400/40 flex flex-col justify-between space-y-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-400/25 text-amber-700 flex items-center justify-center mb-6 shadow-inner group-hover:scale-105 group-hover:bg-amber-400/20 group-hover:border-amber-400/50 transition-all duration-300">
                   <span className="material-symbols-outlined text-2xl">menu_book</span>

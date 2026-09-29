@@ -7,6 +7,7 @@ import {
   getYouTubeThumbnail,
   isValidHttpUrl,
   isValidInstagramUrl,
+  fetchInstagramPreview,
 } from "@/lib/media-utils";
 
 export const dynamic = "force-dynamic";
@@ -230,8 +231,16 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (!finalImageUrl) {
-        finalImageUrl = "/hero_bg.jpeg";
+      if (!finalImageUrl && sanitizedImages.length > 0) {
+        finalImageUrl = sanitizedImages[0];
+      }
+      if (!finalImageUrl || finalImageUrl === "/hero_bg.jpeg") {
+        const instaData = await fetchInstagramPreview(finalExternalUrl);
+        if (instaData?.imageUrl) {
+          finalImageUrl = instaData.imageUrl;
+        } else if (!finalImageUrl) {
+          finalImageUrl = "/hero_bg.jpeg";
+        }
       }
       if (sanitizedImages.length === 0 && finalImageUrl) {
         sanitizedImages = [finalImageUrl];

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { extractInstagramShortcode } from "@/lib/media-utils";
 
 export interface MediaRecord {
   id: string;
@@ -385,26 +386,30 @@ export default function MediaArchivePage() {
         <section className="sticky top-20 z-30 bg-[#faf7f2]/95 backdrop-blur-md border-b border-stone-200/80 py-4 shadow-xs">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-3">
             {/* Top Row: Category Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
-              {CATEGORIES.map((cat) => {
-                const isActive = selectedCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setSelectedCategory(cat.id);
-                      setVisibleCount(PAGE_SIZE);
-                    }}
-                    className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-xs ${isActive
-                        ? "bg-[#102643] text-white shadow-md shadow-slate-900/10 scale-[1.02]"
-                        : "bg-white/90 hover:bg-amber-50 text-slate-700 hover:text-amber-950 border border-stone-200 hover:border-amber-400/60"
-                      }`}
-                  >
-                    <span>{cat.icon}</span>
-                    <span>{cat.label}</span>
-                  </button>
-                );
-              })}
+            <div className="relative">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1.5 md:pb-0 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth">
+                {CATEGORIES.map((cat) => {
+                  const isActive = selectedCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        setSelectedCategory(cat.id);
+                        setVisibleCount(PAGE_SIZE);
+                      }}
+                      className={`snap-start shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer shadow-xs ${isActive
+                          ? "bg-[#102643] text-white shadow-md shadow-slate-900/10 scale-[1.02]"
+                          : "bg-white/90 hover:bg-amber-50 text-slate-700 hover:text-amber-950 border border-stone-200 hover:border-amber-400/60"
+                        }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Mobile right-edge fade gradient hint */}
+              <div className="absolute right-0 top-0 bottom-1 w-8 bg-gradient-to-l from-[#faf7f2] via-[#faf7f2]/80 to-transparent pointer-events-none md:hidden" />
             </div>
 
             {/* Bottom Row: Search Box + Year Filter + Type Pills */}
@@ -492,20 +497,21 @@ export default function MediaArchivePage() {
                       const idx = filteredList.findIndex((m) => m.id === featuredMemories[0].id);
                       if (idx !== -1) handleOpenLightbox(idx);
                     }}
-                    className="lg:col-span-8 group relative min-h-[360px] sm:min-h-[440px] rounded-3xl overflow-hidden bg-slate-950 border border-stone-200 hover:border-amber-400/70 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col justify-end"
+                    className="lg:col-span-8 group relative min-h-[380px] sm:min-h-[440px] rounded-3xl overflow-hidden bg-slate-950 border border-stone-200 hover:border-amber-400/70 shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer flex flex-col justify-between"
                   >
                     <Image
                       src={featuredMemories[0].imageUrl}
                       alt={featuredMemories[0].title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 66vw"
                       unoptimized
                       priority
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-[#060d18]/40 to-transparent opacity-85 group-hover:opacity-95 transition-opacity" />
 
-                    {/* Featured Star Badge */}
-                    <div className="absolute top-5 left-5 right-5 flex items-center justify-between z-10">
+                    {/* Featured Top Badge Row */}
+                    <div className="relative top-0 left-0 right-0 p-4 sm:p-5 flex items-center justify-between z-10 gap-2 flex-wrap">
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/90 text-slate-950 text-xs font-bold uppercase tracking-wider shadow-md">
                         ★ Featured Spotlight
                       </span>
@@ -521,12 +527,12 @@ export default function MediaArchivePage() {
                       </div>
                     </div>
 
-                    {/* Content Block */}
-                    <div className="relative z-10 p-6 sm:p-8 text-white space-y-2">
-                      <div className="text-xs font-mono text-amber-300">
+                    {/* Content Block with Stacked Hierarchy and Proper Mobile Gap */}
+                    <div className="relative z-10 p-5 sm:p-8 text-white flex flex-col gap-1.5 sm:gap-2">
+                      <div className="text-[11px] sm:text-xs font-mono text-amber-300">
                         📅 {formatDate(featuredMemories[0].eventDate)} {featuredMemories[0].location && `• 📍 ${featuredMemories[0].location}`}
                       </div>
-                      <h3 className="font-serif text-2xl sm:text-3xl font-normal text-white group-hover:text-[#fde68a] transition-colors leading-snug">
+                      <h3 className="font-serif text-xl sm:text-3xl font-normal text-white group-hover:text-[#fde68a] transition-colors leading-snug tracking-tight">
                         {featuredMemories[0].title}
                       </h3>
                       <p className="text-xs sm:text-sm text-slate-300 font-light line-clamp-2 max-w-2xl leading-relaxed">
@@ -548,28 +554,29 @@ export default function MediaArchivePage() {
                         const idx = filteredList.findIndex((m) => m.id === item.id);
                         if (idx !== -1) handleOpenLightbox(idx);
                       }}
-                      className="group relative flex-1 min-h-[200px] rounded-3xl overflow-hidden bg-slate-950 border border-stone-200 hover:border-amber-400/60 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col justify-end p-5 text-white"
+                      className="group relative flex-1 min-h-[220px] rounded-3xl overflow-hidden bg-slate-950 border border-stone-200 hover:border-amber-400/60 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer flex flex-col justify-between p-4 sm:p-5 text-white"
                     >
                       <Image
                         src={item.imageUrl}
                         alt={item.title}
                         fill
+                        sizes="(max-width: 1024px) 100vw, 33vw"
                         unoptimized
                         className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#060d18] via-[#060d18]/40 to-transparent opacity-85 group-hover:opacity-95 transition-opacity" />
 
-                      <div className="absolute top-4 left-4 z-10">
+                      <div className="relative top-0 left-0 z-10 mb-6">
                         <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white text-[10px] font-bold uppercase tracking-wider">
                           {item.category}
                         </span>
                       </div>
 
-                      <div className="relative z-10 space-y-1">
+                      <div className="relative z-10 flex flex-col gap-1">
                         <span className="text-[11px] font-mono text-amber-300">
                           {formatDate(item.eventDate)}
                         </span>
-                        <h4 className="font-serif text-lg font-normal text-white group-hover:text-[#fde68a] transition-colors line-clamp-1">
+                        <h4 className="font-serif text-base sm:text-lg font-normal text-white group-hover:text-[#fde68a] transition-colors line-clamp-1">
                           {item.title}
                         </h4>
                         <p className="text-xs text-slate-300 font-light line-clamp-1">
@@ -618,6 +625,7 @@ export default function MediaArchivePage() {
                               src={item.imageUrl}
                               alt={item.title}
                               fill
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               unoptimized
                               className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
                             />
@@ -685,6 +693,7 @@ export default function MediaArchivePage() {
                           src={item.imageUrl}
                           alt={item.title}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           unoptimized
                           className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
                         />
@@ -797,6 +806,7 @@ export default function MediaArchivePage() {
                           src={item.imageUrl}
                           alt={item.title}
                           fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                           unoptimized
                           loading="lazy"
                           className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
@@ -940,15 +950,39 @@ export default function MediaArchivePage() {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                   />
+                ) : currentLightboxItem.mediaType === "INSTAGRAM_REEL" && currentLightboxItem.externalUrl && extractInstagramShortcode(currentLightboxItem.externalUrl) ? (
+                  <div className="w-full h-full min-h-[360px] sm:min-h-[520px] flex items-center justify-center p-2 sm:p-4">
+                    <iframe
+                      className="w-full max-w-sm h-[480px] sm:h-[540px] rounded-2xl border-0 bg-black shadow-2xl"
+                      src={`https://www.instagram.com/p/${extractInstagramShortcode(currentLightboxItem.externalUrl)}/embed`}
+                      title={currentLightboxItem.title}
+                      allowFullScreen
+                    />
+                  </div>
                 ) : (
                   <div className="relative w-full h-full min-h-[300px] sm:min-h-[480px] flex items-center justify-center">
                     <Image
                       src={activePhotoUrl || currentLightboxItem.imageUrl}
                       alt={currentLightboxItem.title}
                       fill
+                      sizes="(max-width: 1024px) 100vw, 1024px"
                       unoptimized
                       className="object-contain p-2 transition-opacity duration-300"
                     />
+
+                    {currentLightboxItem.mediaType === "INSTAGRAM_REEL" && currentLightboxItem.externalUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/35 backdrop-blur-[2px]">
+                        <a
+                          href={currentLightboxItem.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2.5 px-6 py-3 rounded-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white text-xs sm:text-sm font-bold tracking-wide shadow-2xl hover:scale-105 transition-all duration-300 border border-white/30"
+                        >
+                          <span className="text-base">📱</span>
+                          <span>Watch on Instagram Reel ↗</span>
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -993,7 +1027,7 @@ export default function MediaArchivePage() {
                           className={`relative w-12 h-12 rounded-lg overflow-hidden shrink-0 border-2 transition cursor-pointer ${isSelected ? "border-amber-400 scale-105 shadow-md shadow-amber-400/20" : "border-stone-700 opacity-60 hover:opacity-100"
                             }`}
                         >
-                          <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized className="object-cover" />
+                          <Image src={pUrl} alt={`Photo ${pIdx + 1}`} fill unoptimized sizes="48px" className="object-cover" />
                         </button>
                       );
                     })}
